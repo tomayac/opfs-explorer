@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <style>
+      :root {
+        font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+        color-scheme: dark light;
+        --background-color: #d4d4d4;
+        --foreground-color: #333;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --background-color: #333;
+          --foreground-color: #d4d4d4;
+        }
+      }
+      details {
+        margin-left: 2rem;
+      }
+      summary {
+        margin-left: -2rem;
+        list-style: none;
+        cursor: pointer;
+      }
+      .file {
+        cursor: pointer;
+      }
+      .file:nth-child(even) {
+        background-color: var(--background-color);
+      }
+      .file:hover {
+        background-color: transparent;
+      }
+      .size {
+        color: var(--foreground-color);
+      }
+      details.root > summary::before {
+        content: "🏠 (Root) ";
+      }
+      details:not(.root):not([open]) > summary::before {
+        content: "📁 ";
+      }
+      details:not(.root)[open] > summary::before {
+        content: "📂 ";
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+    </main>
+  </body>
+</html>
