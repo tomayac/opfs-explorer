@@ -49,6 +49,12 @@ const createTreeHTML = (
       div.innerHTML = `${key} <span class="size">(${readableSize(
         file.size,
       )})</span>`;
+      div.addEventListener('click', (event) => {
+        chrome.tabs.sendMessage(chrome.devtools.inspectedWindow.tabId, {
+          message: 'downloadFile',
+          data: filePath,
+        });
+      });
       container.append(div);
     }
   });
@@ -66,7 +72,7 @@ chrome.devtools.panels.create(
       const refreshTree = () => {
         chrome.tabs.sendMessage(
           chrome.devtools.inspectedWindow.tabId,
-          'getDirectoryStructure',
+          { message: 'getDirectoryStructure' },
           (response) => {
             const newLength = JSON.stringify(response.structure).length;
             if (lastLength === newLength) {

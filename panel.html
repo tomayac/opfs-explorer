@@ -19,7 +19,6 @@
         margin-left: 2rem;
       }
       summary {
-        margin-left: -2rem;
         list-style: none;
         cursor: pointer;
       }
@@ -32,10 +31,20 @@
       details:not(.root)[open] > summary::before {
         content: "📂 ";
       }
+      .folder {
+        margin-left: calc(-100vw - 2rem);
+      }
+      .file {
+        margin-left: -100vw;
+      }
       .folder,
       .file {
         height: 1.25rem;
         cursor: pointer;
+        display: flex;
+        align-items: center;
+        width: 100vw;
+        padding-left: 100vw;
       }
       .folder.even,
       .file.even {
@@ -46,6 +55,7 @@
         background-color: var(--background-color);
       }
       .size {
+        margin-left: 0.25rem;
         color: var(--foreground-color);
       }
     </style>
