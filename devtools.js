@@ -7,11 +7,11 @@ const readableSize = (size) => {
 };
 
 const createTreeHTML = (folder, structure, container, relativePath, isRoot = false) => {
-  console.log('relative', relativePath);
   Object.keys(folder).forEach(key => {
     if (Object.keys(folder[key]).length) {
       const details = document.createElement('details');
       const summary = document.createElement('summary');
+      summary.classList.add('folder');
       if (isRoot) {
         details.open = true
         details.classList.add('root');
@@ -33,7 +33,6 @@ const createTreeHTML = (folder, structure, container, relativePath, isRoot = fal
       const file = structure.find(element => {
         return element.relativePath === filePath
       });
-      console.log('file', file, file.size, filePath);
       div.innerHTML = `${key} <span class="size">(${readableSize(file.size)})</span>`;
       container.append(div);
     }
@@ -50,18 +49,28 @@ chrome.devtools.panels.create("OPFS Explorer", "icon.svg", "panel.html", panel =
                   chrome.devtools.inspectedWindow.tabId,
                   "getDirectoryStructure",
                 (response) => {
+                  const newLength = JSON.stringify(response.structure).length
+                  if (lastLength === newLength) {
+                    return;
+                  }
+                  lastLength = newLength;
                   const structure = {};
                   response.structure.forEach(file => {
                     file.relativePath.split('/').reduce((previous,current)=> (previous[current] = previous[current] || {}), structure)
                   });
-                  console.log(structure)
                   const div = document.createElement('div');
                   createTreeHTML(structure, response.structure, div, '.', true)
-                  if (div.textContent.length !== lastLength) {
-                    main.innerHTML = '';
-                    main.append(div);
-                    lastLength = div.textContent.length;
-                  }
+                  main.innerHTML = '';
+                  main.append(div);
+                  main.addEventListener('keydown', (event) => {
+                    if (event.target.nodeName === 'SUMMARY') {
+                      if (event.key === 'ArrowRight') {
+                        event.target.parentElement.open = true;
+                      } else if (event.key === 'ArrowLeft') {
+                        event.target.parentElement.open = false;
+                      }
+                    }
+                  });
                 });
         }
 

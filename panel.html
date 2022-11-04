@@ -23,18 +23,6 @@
         list-style: none;
         cursor: pointer;
       }
-      .file {
-        cursor: pointer;
-      }
-      .file:nth-child(even) {
-        background-color: var(--background-color);
-      }
-      .file:hover {
-        background-color: transparent;
-      }
-      .size {
-        color: var(--foreground-color);
-      }
       details.root > summary::before {
         content: "🏠 (Root) ";
       }
@@ -43,6 +31,22 @@
       }
       details:not(.root)[open] > summary::before {
         content: "📂 ";
+      }
+      .folder,
+      .file {
+        height: 1.25rem;
+        cursor: pointer;
+      }
+      .folder.even,
+      .file.even {
+        background-color: var(--background-color);
+      }
+      .folder:hover,
+      .file:hover {
+        background-color: var(--background-color);
+      }
+      .size {
+        color: var(--foreground-color);
       }
     </style>
   </head>

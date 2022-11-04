@@ -28,9 +28,7 @@
   };
 
   const asyncFunctionWithAwait = async (request, sender, sendResponse) => {
-    console.log(request, sender)
     const structure = await getFiles(await navigator.storage.getDirectory(), '.');
-    console.log(structure);
     sendResponse({structure});
   }
 
