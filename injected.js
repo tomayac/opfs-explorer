@@ -3,7 +3,7 @@
     dirHandle,
     recursive,
     path = dirHandle.name,
-    skipDirectory
+    skipDirectory,
   ) => {
     const dirs = [];
     const files = [];
@@ -19,7 +19,7 @@
               enumerable: true,
               get: () => nestedPath,
             });
-          })
+          }),
         );
       } else if (
         entry.kind === 'directory' &&
@@ -40,8 +40,13 @@
     options.recursive = options.recursive || true;
     options.mode = options.mode || 'read';
     const handle = await navigator.storage.getDirectory();
-    return getFiles(handle, options.recursive, undefined, options.skipDirectory);
+    return getFiles(
+      handle,
+      options.recursive,
+      undefined,
+      options.skipDirectory,
+    );
   };
 
   return await list();
-})()
+})();
