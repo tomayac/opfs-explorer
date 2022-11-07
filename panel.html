@@ -7,13 +7,23 @@
         font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
         color-scheme: dark light;
         --background-color: #d4d4d4;
-        --foreground-color: #333;
+        --secondary-text-color-color: #333;
       }
       @media (prefers-color-scheme: dark) {
         :root {
           --background-color: #333;
-          --foreground-color: #d4d4d4;
+          --secondary-text-color-color: #d4d4d4;
         }
+      }
+      main {
+        background-image: linear-gradient(
+          to bottom,
+          var(--background-color),
+          var(--background-color) 50%,
+          Canvas 50%,
+          Canvas
+        );
+        background-size: 100% 2.5rem;
       }
       details {
         margin-left: 2rem;
@@ -22,20 +32,32 @@
         list-style: none;
         cursor: pointer;
       }
+      dialog {
+        max-width: 65ch;
+      }
+      dialog::backdrop {
+        backdrop-filter: blur(5px);
+      }
+      code {
+        font-family: ui-monospace, monospace;
+        color: red;
+      }
       details.root > summary::before {
-        content: "🏠 (Root) ";
+        content: "🏠 (Root)";
       }
       details:not(.root):not([open]) > summary::before {
         content: "📁 ";
+        margin-inline-end: 0.25rem;
       }
       details:not(.root)[open] > summary::before {
         content: "📂 ";
+        margin-inline-end: 0.25rem;
       }
       .folder {
-        margin-left: calc(-100vw - 2rem);
+        margin-inline-start: calc(-100vw - 2rem);
       }
       .file {
-        margin-left: -100vw;
+        margin-inline-start: -100vw;
       }
       .folder,
       .file {
@@ -46,21 +68,60 @@
         width: 100vw;
         padding-left: 100vw;
       }
-      .folder.even,
-      .file.even {
-        background-color: var(--background-color);
-      }
       .folder:hover,
       .file:hover {
-        background-color: var(--background-color);
+        background-color: Canvas;
+      }
+      .size,
+      .delete {
+        margin-inline-start: 0.25rem;
       }
       .size {
-        margin-left: 0.25rem;
-        color: var(--foreground-color);
+        cursor: default;
+        color: var(--secondary-text-color-color);
+      }
+      .confirm-dialog form::before {
+        content: "🛎️ Question:";
+      }
+      .error-dialog form::before {
+        content: "❌ Error:";
+      }
+      .spinner {
+        animation: spin 4s linear infinite;
+        display: inline-block;
+      }
+      main:has(.spinner) {
+        background-image: none;
+      }
+      @keyframes spin {
+        100% {
+          transform: rotate(360deg);
+        }
       }
     </style>
   </head>
   <body>
-    <main></main>
+    <main>
+      <span class="spinner">⏳</span> Analyzing Origin Private File System
+    </main>
+    <dialog class="confirm-dialog">
+      <form method="dialog">
+        <p>Do you really want to delete the file <code></code>?</p>
+        <div>
+          <button type="cancel" value="cancel">Cancel</button>
+          <button type="submit" class="confirm-button" value="delete">
+            Confirm
+          </button>
+        </div>
+      </form>
+    </dialog>
+    <dialog class="error-dialog">
+      <form method="dialog">
+        <p></p>
+        <div>
+          <button type="submit" class="confirm-button" value="ok">OK</button>
+        </div>
+      </form>
+    </dialog>
   </body>
 </html>

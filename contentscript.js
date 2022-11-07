@@ -27,26 +27,38 @@ const getFiles = async (dirHandle, path = dirHandle.name) => {
   return [...(await Promise.all(dirs)).flat(), ...(await Promise.all(files))];
 };
 
+const getFileHandle = (path) => {
+  return fileHandles.find((element) => {
+    return element.relativePath === path;
+  });
+};
+
 const asyncFunctionWithAwait = async (request, sender, sendResponse) => {
-  structure = await getFiles(await navigator.storage.getDirectory(), '.');
-  sendResponse({ structure });
+  if (request.message === 'getDirectoryStructure') {
+    const root = await navigator.storage.getDirectory();
+    structure = await getFiles(root, '.');
+    sendResponse({ structure });
+  } else if (request.message === 'downloadFile') {
+    const fileHandle = getFileHandle(request.data);
+    const handle = await showSaveFilePicker({
+      suggestedName: fileHandle.name,
+    });
+    const writable = await handle.createWritable();
+    await writable.write(await fileHandle.getFile());
+    await writable.close();
+  } else if (request.message === 'deleteFile') {
+    const fileHandle = getFileHandle(request.data);
+    try {
+      await fileHandle.remove();
+      sendResponse({ result: 'ok' });
+    } catch (error) {
+      sendResponse({ error: error.message });
+    }
+  }
 };
 
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-  if (request.message === 'getDirectoryStructure') {
-    // https://stackoverflow.com/a/65405319/6255000
-    asyncFunctionWithAwait(request, sender, sendResponse);
-  } else if (request.message === 'downloadFile') {
-    const fileHandle = fileHandles.find((element) => {
-      return element.relativePath === request.data;
-    });
-    fileHandle.getFile().then((file) => {
-      const blobURL = URL.createObjectURL(file);
-      const a = document.createElement('a');
-      a.href = blobURL;
-      a.download = file.name;
-      a.click();
-    });
-  }
+  // https://stackoverflow.com/a/65405319/6255000
+  asyncFunctionWithAwait(request, sender, sendResponse);
   return true;
 });

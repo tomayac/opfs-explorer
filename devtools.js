@@ -1,3 +1,6 @@
+let confirmDialog;
+let errorDialog;
+
 let interval = null;
 
 const readableSize = (size) => {
@@ -46,15 +49,47 @@ const createTreeHTML = (
       const file = structure.find((element) => {
         return element.relativePath === filePath;
       });
-      div.innerHTML = `${key} <span class="size">(${readableSize(
-        file.size,
-      )})</span>`;
-      div.addEventListener('click', (event) => {
+      const fileNameSpan = document.createElement('span');
+      fileNameSpan.textContent = key;
+      fileNameSpan.addEventListener('click', (event) => {
         chrome.tabs.sendMessage(chrome.devtools.inspectedWindow.tabId, {
           message: 'downloadFile',
           data: filePath,
         });
       });
+      const sizeSpan = document.createElement('span');
+      sizeSpan.classList.add('size');
+      sizeSpan.textContent = readableSize(file.size);
+      const deleteSpan = document.createElement('span');
+      deleteSpan.textContent = '🗑️';
+      deleteSpan.classList.add('delete');
+      deleteSpan.addEventListener('click', (event) => {
+        confirmDialog.querySelector('code').textContent = key;
+        confirmDialog.addEventListener(
+          'close',
+          (event) => {
+            if (confirmDialog.returnValue === 'delete') {
+              chrome.tabs.sendMessage(
+                chrome.devtools.inspectedWindow.tabId,
+                {
+                  message: 'deleteFile',
+                  data: filePath,
+                },
+                (response) => {
+                  if (response.error) {
+                    errorDialog.querySelector('p').textContent = response.error;
+                    return errorDialog.showModal();
+                  }
+                  div.remove();
+                },
+              );
+            }
+          },
+          { once: true },
+        );
+        confirmDialog.showModal();
+      });
+      div.append(fileNameSpan, sizeSpan, deleteSpan);
       container.append(div);
     }
   });
@@ -66,6 +101,9 @@ chrome.devtools.panels.create(
   'panel.html',
   (panel) => {
     panel.onShown.addListener((extPanelWindow) => {
+      confirmDialog =
+        extPanelWindow.document.body.querySelector('.confirm-dialog');
+      errorDialog = extPanelWindow.document.body.querySelector('.error-dialog');
       const main = extPanelWindow.document.body.querySelector('main');
       let lastLength = 0;
 
