@@ -1,3 +1,5 @@
+<img src="https://raw.githubusercontent.com/tomayac/opfs-explorer/main/icon.svg" alt="OPFS Explorer icon." width="128" height="128">
+
 # OPFS Explorer
 
 OPFS Explorer is a Chrome DevTools extension that allows you to explore the
