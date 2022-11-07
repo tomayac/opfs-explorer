@@ -2,7 +2,7 @@
   "name": "OPFS Explorer",
   "description": "A browser DevTools extension that lets you explore the Origin Private File System (OPFS) of the current origin.",
   "manifest_version": 3,
-  "version": "1.0",
+  "version": "1.0.0",
   "devtools_page": "devtools.html",
   "content_scripts": [
     {

@@ -154,12 +154,12 @@ chrome.devtools.panels.create(
   },
 );
 
-// Create a connection to the background service worker
+// Create a connection to the background service worker.
 const backgroundPageConnection = chrome.runtime.connect({
   name: 'devtools-page',
 });
 
-// Relay the tab ID to the background service worker
+// Relay the tab ID to the background service worker.
 backgroundPageConnection.postMessage({
   name: 'init',
   tabId: chrome.devtools.inspectedWindow.tabId,
