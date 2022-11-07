@@ -22,10 +22,16 @@ Install the extension from the
 
 ## Usage
 
-Open Chrome DevTools and click on the OPFS Explorer tab. The extension will
+Open Chrome DevTools and click on the **OPFS Explorer** tab. The extension will
 automatically analyze the OPFS of the current web application and display the
-file hierarchy. You can then click on any file to download its contents or
-delete the file (which may fail if the file is locked).
+file hierarchy. You can then click on any file to **download** its contents or
+**delete** the file (which may fail if the file is locked). Note that deleting
+files may cause the application to break.
+
+## Trying the extension
+
+You can test the extension on the
+[demo page](https://tomayac.github.io/opfs-explorer/).
 
 ## License
 

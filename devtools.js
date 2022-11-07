@@ -18,81 +18,84 @@ const createTreeHTML = (
   relativePath,
   isRoot = false,
 ) => {
-  Object.keys(folder).sort().forEach((key) => {
-    if (Object.keys(folder[key]).length) {
-      const details = document.createElement('details');
-      const summary = document.createElement('summary');
-      summary.classList.add('folder');
-      if (isRoot) {
-        details.open = true;
-        details.classList.add('root');
-        summary.textContent = ' ';
-      } else {
-        summary.textContent = key;
-      }
-      details.append(summary);
-      const div = document.createElement('div');
-      details.append(div);
-      container.append(details);
-      createTreeHTML(
-        folder[key],
-        structure,
-        div,
-        key !== '.' ? relativePath + '/' + key : relativePath,
-      );
-    } else {
-      const div = document.createElement('div');
-      div.classList.add('file');
-      div.tabIndex = 0;
-      const filePath = relativePath + '/' + key;
-      div.dataset.relativePath = filePath;
-      const file = structure.find((element) => {
-        return element.relativePath === filePath;
-      });
-      const fileNameSpan = document.createElement('span');
-      fileNameSpan.textContent = key;
-      fileNameSpan.addEventListener('click', (event) => {
-        chrome.tabs.sendMessage(chrome.devtools.inspectedWindow.tabId, {
-          message: 'downloadFile',
-          data: filePath,
-        });
-      });
-      const sizeSpan = document.createElement('span');
-      sizeSpan.classList.add('size');
-      sizeSpan.textContent = readableSize(file.size);
-      const deleteSpan = document.createElement('span');
-      deleteSpan.textContent = '🗑️';
-      deleteSpan.classList.add('delete');
-      deleteSpan.addEventListener('click', (event) => {
-        confirmDialog.querySelector('code').textContent = key;
-        confirmDialog.addEventListener(
-          'close',
-          (event) => {
-            if (confirmDialog.returnValue === 'delete') {
-              chrome.tabs.sendMessage(
-                chrome.devtools.inspectedWindow.tabId,
-                {
-                  message: 'deleteFile',
-                  data: filePath,
-                },
-                (response) => {
-                  if (response.error) {
-                    errorDialog.querySelector('p').textContent = response.error;
-                    return errorDialog.showModal();
-                  }
-                  div.remove();
-                },
-              );
-            }
-          },
-          { once: true },
+  Object.keys(folder)
+    .sort()
+    .forEach((key) => {
+      if (Object.keys(folder[key]).length) {
+        const details = document.createElement('details');
+        const summary = document.createElement('summary');
+        summary.classList.add('folder');
+        if (isRoot) {
+          details.open = true;
+          details.classList.add('root');
+          summary.textContent = ' ';
+        } else {
+          summary.textContent = key;
+        }
+        details.append(summary);
+        const div = document.createElement('div');
+        details.append(div);
+        container.append(details);
+        createTreeHTML(
+          folder[key],
+          structure,
+          div,
+          key !== '.' ? relativePath + '/' + key : relativePath,
         );
-        confirmDialog.showModal();
-      });
-      div.append(fileNameSpan, sizeSpan, deleteSpan);
-      container.append(div);
-    }
-  });
+      } else {
+        const div = document.createElement('div');
+        div.classList.add('file');
+        div.tabIndex = 0;
+        const filePath = relativePath + '/' + key;
+        div.dataset.relativePath = filePath;
+        const file = structure.find((element) => {
+          return element.relativePath === filePath;
+        });
+        const fileNameSpan = document.createElement('span');
+        fileNameSpan.textContent = key;
+        fileNameSpan.addEventListener('click', (event) => {
+          chrome.tabs.sendMessage(chrome.devtools.inspectedWindow.tabId, {
+            message: 'downloadFile',
+            data: filePath,
+          });
+        });
+        const sizeSpan = document.createElement('span');
+        sizeSpan.classList.add('size');
+        sizeSpan.textContent = readableSize(file.size);
+        const deleteSpan = document.createElement('span');
+        deleteSpan.textContent = '🗑️';
+        deleteSpan.classList.add('delete');
+        deleteSpan.addEventListener('click', (event) => {
+          confirmDialog.querySelector('code').textContent = key;
+          confirmDialog.addEventListener(
+            'close',
+            (event) => {
+              if (confirmDialog.returnValue === 'delete') {
+                chrome.tabs.sendMessage(
+                  chrome.devtools.inspectedWindow.tabId,
+                  {
+                    message: 'deleteFile',
+                    data: filePath,
+                  },
+                  (response) => {
+                    if (response.error) {
+                      errorDialog.querySelector('p').textContent =
+                        response.error;
+                      return errorDialog.showModal();
+                    }
+                    div.remove();
+                  },
+                );
+              }
+            },
+            { once: true },
+          );
+          confirmDialog.showModal();
+        });
+        div.append(fileNameSpan, sizeSpan, deleteSpan);
+        container.append(div);
+      }
+    });
 };
 
 chrome.devtools.panels.create(
