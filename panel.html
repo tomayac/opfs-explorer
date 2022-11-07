@@ -6,7 +6,7 @@
       :root {
         font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
         color-scheme: dark light;
-        --background-color: #d4d4d4;
+        --background-color: #eee;
         --secondary-text-color-color: #333;
       }
       @media (prefers-color-scheme: dark) {
@@ -18,12 +18,16 @@
       main {
         background-image: linear-gradient(
           to bottom,
-          var(--background-color),
-          var(--background-color) 50%,
+          Canvas,
           Canvas 50%,
-          Canvas
-        );
+          var(--background-color) 50%,
+          var(--background-color)
+        ) !important;
         background-size: 100% 2.5rem;
+        overflow-x: clip;
+      }
+      main:has(.spinner) {
+        background-image: none;
       }
       details {
         margin-left: 2rem;
@@ -89,9 +93,6 @@
       .spinner {
         animation: spin 4s linear infinite;
         display: inline-block;
-      }
-      main:has(.spinner) {
-        background-image: none;
       }
       @keyframes spin {
         100% {
