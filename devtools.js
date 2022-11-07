@@ -18,7 +18,7 @@ const createTreeHTML = (
   relativePath,
   isRoot = false,
 ) => {
-  Object.keys(folder).forEach((key) => {
+  Object.keys(folder).sort().forEach((key) => {
     if (Object.keys(folder[key]).length) {
       const details = document.createElement('details');
       const summary = document.createElement('summary');

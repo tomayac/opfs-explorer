@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>OPFS Explorer Demo</title>
+    <style>
+      :root {
+        color-scheme: dark light;
+        font-family: system-ui, sans-serif;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>OPFS Explorer Demo</h1>
+    <p>
+      This demo creates an OPFS file hierarchy for testing the extension. Use the OPFS Explorer extension to inspect it.
+    </p>
+    <script>
+      const worker = `
+        (async () => {
+          const root = await navigator.storage.getDirectory();
+          for (let i = 0; i < 10; i++) {
+            const directoryHandle = await root.getDirectoryHandle('directory' + i, {create: true});
+            for (let j = 0; j < 10; j++) {
+              const fileHandle = await directoryHandle.getFileHandle('file' + j + '.txt', {create: true});
+              const writable = await fileHandle.createWritable();
+              console.log('Hello, world ' + i + '/' + j + '!');
+              await writable.write('Hello, world ' + i + '/' + j + '!');
+              await writable.close();
+            }
+          }
+        })();`;
+      const blob = new Blob([worker], {type: 'text/javascript'});
+      const url = URL.createObjectURL(blob);
+      new Worker(url);
+    </script>
+  </body>
+</html>
