@@ -12,11 +12,11 @@ const getFiles = async (dirHandle, path = dirHandle.name) => {
         entry.getFile().then((file) => {
           return {
             name: file.name,
+            relativePath: nestedPath,
             size: file.size,
             type: file.type,
             lastModified: file.lastModified,
             lastModifiedDate: file.lastModifiedDate,
-            relativePath: nestedPath,
           };
         }),
       );

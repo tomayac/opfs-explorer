@@ -1,7 +1,12 @@
-let confirmDialog;
-let errorDialog;
+let confirmDialog = null;
+let errorDialog = null;
+let main = null;
+let mainInnerHTML = '';
+const mainEmptyHTML = '<span>🫙</span> Origin Private File System empty.';
 
 let interval = null;
+
+let lastLength = 0;
 
 const readableSize = (size) => {
   if (size === 0) return '0B';
@@ -98,6 +103,50 @@ const createTreeHTML = (
     });
 };
 
+const refreshTree = () => {
+  chrome.tabs.sendMessage(
+    chrome.devtools.inspectedWindow.tabId,
+    { message: 'getDirectoryStructure' },
+    (response) => {
+      if (!response.structure) {
+        return;
+      }
+      const newLength = JSON.stringify(response.structure).length;
+      if (lastLength === newLength) {
+        return;
+      }
+      lastLength = newLength;
+      const structure = {};
+      if (response.structure.length === 0) {
+        main.innerHTML = mainEmptyHTML;
+        return;
+      }
+      response.structure.forEach((file) => {
+        file.relativePath
+          .split('/')
+          .reduce(
+            (previous, current) =>
+              (previous[current] = previous[current] || {}),
+            structure,
+          );
+      });
+      const div = document.createElement('div');
+      createTreeHTML(structure, response.structure, div, '.', true);
+      main.innerHTML = '';
+      main.append(div);
+      main.addEventListener('keydown', (event) => {
+        if (event.target.nodeName === 'SUMMARY') {
+          if (event.key === 'ArrowRight') {
+            event.target.parentElement.open = true;
+          } else if (event.key === 'ArrowLeft') {
+            event.target.parentElement.open = false;
+          }
+        }
+      });
+    },
+  );
+};
+
 chrome.devtools.panels.create(
   'OPFS Explorer',
   'icon128.png',
@@ -107,45 +156,10 @@ chrome.devtools.panels.create(
       confirmDialog =
         extPanelWindow.document.body.querySelector('.confirm-dialog');
       errorDialog = extPanelWindow.document.body.querySelector('.error-dialog');
-      const main = extPanelWindow.document.body.querySelector('main');
-      let lastLength = 0;
+      main = extPanelWindow.document.body.querySelector('main');
+      mainInnerHTML = main.innerHTML;
 
-      const refreshTree = () => {
-        chrome.tabs.sendMessage(
-          chrome.devtools.inspectedWindow.tabId,
-          { message: 'getDirectoryStructure' },
-          (response) => {
-            const newLength = JSON.stringify(response.structure).length;
-            if (lastLength === newLength) {
-              return;
-            }
-            lastLength = newLength;
-            const structure = {};
-            response.structure.forEach((file) => {
-              file.relativePath
-                .split('/')
-                .reduce(
-                  (previous, current) =>
-                    (previous[current] = previous[current] || {}),
-                  structure,
-                );
-            });
-            const div = document.createElement('div');
-            createTreeHTML(structure, response.structure, div, '.', true);
-            main.innerHTML = '';
-            main.append(div);
-            main.addEventListener('keydown', (event) => {
-              if (event.target.nodeName === 'SUMMARY') {
-                if (event.key === 'ArrowRight') {
-                  event.target.parentElement.open = true;
-                } else if (event.key === 'ArrowLeft') {
-                  event.target.parentElement.open = false;
-                }
-              }
-            });
-          },
-        );
-      };
+      lastLength = 0;
 
       refreshTree();
       interval = setInterval(refreshTree, 3000);
@@ -166,4 +180,12 @@ const backgroundPageConnection = chrome.runtime.connect({
 backgroundPageConnection.postMessage({
   name: 'init',
   tabId: chrome.devtools.inspectedWindow.tabId,
+});
+
+backgroundPageConnection.onMessage.addListener((message) => {
+  if (message.name === 'navigation') {
+    lastLength = 0;
+    main.innerHTML = mainInnerHTML;
+    refreshTree();
+  }
 });
