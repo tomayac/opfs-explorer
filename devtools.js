@@ -2,7 +2,7 @@ let confirmDialog = null;
 let errorDialog = null;
 let main = null;
 let mainInnerHTML = '';
-const mainEmptyHTML = '<span>🫙</span> Origin Private File System empty.';
+const mainEmptyHTML = '<span>🫙</span> Origin Private File System is empty.';
 
 let interval = null;
 
@@ -157,7 +157,9 @@ chrome.devtools.panels.create(
         extPanelWindow.document.body.querySelector('.confirm-dialog');
       errorDialog = extPanelWindow.document.body.querySelector('.error-dialog');
       main = extPanelWindow.document.body.querySelector('main');
-      mainInnerHTML = main.innerHTML;
+      if (!mainInnerHTML) {
+        mainInnerHTML = main.innerHTML;
+      }
 
       lastLength = 0;
 

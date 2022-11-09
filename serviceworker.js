@@ -19,7 +19,7 @@ chrome.runtime.onConnect.addListener((devToolsConnection) => {
   });
 });
 
-chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
+chrome.tabs.onUpdated.addListener(() => {
   devToolsConnection.postMessage({
     name: 'navigation',
   });
