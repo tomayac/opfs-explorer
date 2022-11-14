@@ -15,7 +15,7 @@ application.
 ## Installation
 
 Install the extension from the
-[Chrome Web Store](https://chrome.google.com/webstore/search/opfs%20explorer)
+[Chrome Web Store](https://chrome.google.com/webstore/detail/opfs-explorer/acndjpgkpaclldomagafnognkcgjignd)
 (end users) or clone the repo and
 [load the unpacked extension locally](https://developer.chrome.com/docs/extensions/mv3/getstarted/development-basics/#load-unpacked)
 (developers).
