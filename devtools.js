@@ -109,7 +109,7 @@
       browser.devtools.inspectedWindow.tabId,
       { message: 'getDirectoryStructure' },
       (response) => {
-        if (!response?.structure) {
+        if (!response.structure) {
           return;
         }
         const newLength = JSON.stringify(response.structure).length;
