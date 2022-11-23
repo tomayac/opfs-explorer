@@ -18,11 +18,11 @@
     devToolsConnection.onDisconnect.addListener(() => {
       devToolsConnection.onMessage.removeListener(devToolsListener);
     });
-  });
 
-  browser.tabs.onUpdated.addListener(() => {
-    devToolsConnection.postMessage({
-      name: 'navigation',
+    browser.tabs.onUpdated.addListener(() => {
+      devToolsConnection.postMessage({
+        name: 'navigation',
+      });
     });
   });
 })(chrome || browser);
