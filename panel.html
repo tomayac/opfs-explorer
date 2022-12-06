@@ -58,13 +58,13 @@
         content: "📂 ";
         margin-inline-end: 0.25rem;
       }
-      .folder {
+      .directory {
         margin-inline-start: calc(-100vw - 2rem);
       }
       .file {
         margin-inline-start: -100vw;
       }
-      .folder,
+      .directory,
       .file {
         height: 1.25rem;
         cursor: pointer;
@@ -73,7 +73,7 @@
         width: 100vw;
         padding-left: 100vw;
       }
-      .folder:hover,
+      .directory:hover,
       .file:hover {
         background-color: Canvas;
       }
@@ -108,7 +108,7 @@
     </main>
     <dialog class="confirm-dialog">
       <form method="dialog">
-        <p>Do you really want to delete the file <code></code>?</p>
+        <p>Do you really want to delete the <span></span> <code></code>?</p>
         <div>
           <button type="cancel" value="cancel">Cancel</button>
           <button type="submit" class="confirm-button" value="delete">

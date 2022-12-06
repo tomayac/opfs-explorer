@@ -1,31 +1,42 @@
 ((browser) => {
   let fileHandles = [];
+  let directoryHandles = [];
 
-  const getFiles = async (dirHandle, path = dirHandle.name) => {
-    const dirs = [];
-    const files = [];
-    for await (const entry of dirHandle.values()) {
-      const nestedPath = path + '/' + entry.name;
+  const getDirectoryEntriesRecursive = async (
+    directoryHandle,
+    relativePath = '.',
+  ) => {
+    const entries = {};
+    // Get an iterator for the files and folders in the directory.
+    const iterator = directoryHandle.values();
+    // Iterate through the files and folders.
+    for await (const entry of iterator) {
+      // If the entry is a file, add it to the entries object.
+      const nestedPath = `${relativePath}/${entry.name}`;
       if (entry.kind === 'file') {
         entry.relativePath = nestedPath;
         fileHandles.push(entry);
-        files.push(
-          entry.getFile().then((file) => {
-            return {
-              name: file.name,
-              relativePath: nestedPath,
-              size: file.size,
-              type: file.type,
-              lastModified: file.lastModified,
-              lastModifiedDate: file.lastModifiedDate,
-            };
-          }),
-        );
-      } else if (entry.kind === 'directory') {
-        dirs.push(getFiles(entry, nestedPath));
+        const file = await entry.getFile();
+        entries[entry.name] = {
+          kind: entry.kind,
+          size: file.size,
+          type: file.type,
+          lastModified: file.lastModified,
+          relativePath: nestedPath,
+        };
+      }
+      // If the entry is a directory, recursively get its entries and add them to the entries object.
+      else if (entry.kind === 'directory') {
+        entry.relativePath = nestedPath;
+        directoryHandles.push(entry);
+        entries[entry.name] = {
+          kind: entry.kind,
+          relativePath: nestedPath,
+          entries: await getDirectoryEntriesRecursive(entry, nestedPath),
+        };
       }
     }
-    return [...(await Promise.all(dirs)).flat(), ...(await Promise.all(files))];
+    return entries;
   };
 
   const getFileHandle = (path) => {
@@ -34,25 +45,56 @@
     });
   };
 
+  const getDirectoryHandle = (path) => {
+    return directoryHandles.find((element) => {
+      return element.relativePath === path;
+    });
+  };
+
   const asyncFunctionWithAwait = async (request, sender, sendResponse) => {
     if (request.message === 'getDirectoryStructure') {
+      fileHandles = [];
+      directoryHandles = [];
       const root = await navigator.storage.getDirectory();
-      structure = await getFiles(root, '.');
-      sendResponse({ structure });
-    } else if (request.message === 'downloadFile') {
+      const structure = await getDirectoryEntriesRecursive(root);
+      const rootStructure = {
+        '.': {
+          kind: 'directory',
+          relativePath: '.',
+          entries: structure,
+        },
+      };
+      sendResponse({ structure: rootStructure });
+    } else if (request.message === 'saveFile') {
       const fileHandle = getFileHandle(request.data);
-      const handle = await showSaveFilePicker({
-        suggestedName: fileHandle.name,
-      });
-      const writable = await handle.createWritable();
-      await writable.write(await fileHandle.getFile());
-      await writable.close();
+      try {
+        const handle = await showSaveFilePicker({
+          suggestedName: fileHandle.name,
+        });
+        const writable = await handle.createWritable();
+        await writable.write(await fileHandle.getFile());
+        await writable.close();
+      } catch (error) {
+        if (error.name !== 'AbortError') {
+          console.error(error.name, error.message);
+        }
+      }
     } else if (request.message === 'deleteFile') {
       const fileHandle = getFileHandle(request.data);
       try {
         await fileHandle.remove();
         sendResponse({ result: 'ok' });
       } catch (error) {
+        console.error(error.name, error.message);
+        sendResponse({ error: error.message });
+      }
+    } else if (request.message === 'deleteDirectory') {
+      const directoryHandle = getDirectoryHandle(request.data);
+      try {
+        await directoryHandle.remove({ recursive: true });
+        sendResponse({ result: 'ok' });
+      } catch (error) {
+        console.error(error.name, error.message);
         sendResponse({ error: error.message });
       }
     }

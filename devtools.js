@@ -13,65 +13,30 @@
     if (size === 0) return '0B';
     const i = Math.floor(Math.log(size) / Math.log(1024));
     return `${(size / Math.pow(1024, i)).toFixed(2) * 1} ${
-      ['B', 'kB', 'MB', 'GB', 'TB'][i]
+      ['B', 'KB', 'MB', 'GB', 'TB'][i]
     }`;
   };
 
-  const createTreeHTML = (
-    folder,
-    structure,
-    container,
-    relativePath,
-    isRoot = false,
-  ) => {
-    Object.keys(folder)
-      .sort()
-      .forEach((key) => {
-        if (Object.keys(folder[key]).length) {
-          const details = document.createElement('details');
-          const summary = document.createElement('summary');
-          summary.classList.add('folder');
-          if (isRoot) {
-            details.open = true;
-            details.classList.add('root');
-            summary.textContent = ' ';
-          } else {
-            summary.textContent = key;
-          }
-          details.append(summary);
-          const div = document.createElement('div');
-          details.append(div);
-          container.append(details);
-          createTreeHTML(
-            folder[key],
-            structure,
-            div,
-            key !== '.' ? relativePath + '/' + key : relativePath,
-          );
+  const createTreeHTML = (structure, container) => {
+    for (const [key, value] of Object.entries(structure)) {
+      if (value.kind === 'directory') {
+        const details = document.createElement('details');
+        container.append(details);
+        const summary = document.createElement('summary');
+        summary.classList.add('directory');
+        details.append(summary);
+        if (value.relativePath === '.') {
+          details.open = true;
+          details.classList.add('root');
+          summary.textContent = ' ';
         } else {
-          const div = document.createElement('div');
-          div.classList.add('file');
-          div.tabIndex = 0;
-          const filePath = relativePath + '/' + key;
-          div.dataset.relativePath = filePath;
-          const file = structure.find((element) => {
-            return element.relativePath === filePath;
-          });
-          const fileNameSpan = document.createElement('span');
-          fileNameSpan.textContent = key;
-          fileNameSpan.addEventListener('click', (event) => {
-            browser.tabs.sendMessage(browser.devtools.inspectedWindow.tabId, {
-              message: 'downloadFile',
-              data: filePath,
-            });
-          });
-          const sizeSpan = document.createElement('span');
-          sizeSpan.classList.add('size');
-          sizeSpan.textContent = readableSize(file.size);
+          const directoryNameSpan = document.createElement('span');
+          directoryNameSpan.textContent = key;
           const deleteSpan = document.createElement('span');
           deleteSpan.textContent = '🗑️';
           deleteSpan.classList.add('delete');
           deleteSpan.addEventListener('click', (event) => {
+            confirmDialog.querySelector('span').textContent = 'directory';
             confirmDialog.querySelector('code').textContent = key;
             confirmDialog.addEventListener(
               'close',
@@ -80,8 +45,8 @@
                   browser.tabs.sendMessage(
                     browser.devtools.inspectedWindow.tabId,
                     {
-                      message: 'deleteFile',
-                      data: filePath,
+                      message: 'deleteDirectory',
+                      data: value.relativePath,
                     },
                     (response) => {
                       if (response.error) {
@@ -98,10 +63,64 @@
             );
             confirmDialog.showModal();
           });
-          div.append(fileNameSpan, sizeSpan, deleteSpan);
-          container.append(div);
+          summary.append(directoryNameSpan, deleteSpan);
         }
-      });
+        const div = document.createElement('div');
+        details.append(div);
+        createTreeHTML(value.entries, div);
+      } else if (value.kind === 'file') {
+        const div = document.createElement('div');
+        div.classList.add('file');
+        div.tabIndex = 0;
+        div.title = `Type: ${
+          value.type || 'Unknown'
+        } - Last modified: ${new Date(value.lastModified).toLocaleString()}`;
+        container.append(div);
+        const fileNameSpan = document.createElement('span');
+        fileNameSpan.textContent = key;
+        fileNameSpan.addEventListener('click', (event) => {
+          browser.tabs.sendMessage(browser.devtools.inspectedWindow.tabId, {
+            message: 'saveFile',
+            data: value.relativePath,
+          });
+        });
+        const sizeSpan = document.createElement('span');
+        sizeSpan.classList.add('size');
+        sizeSpan.textContent = readableSize(value.size);
+        const deleteSpan = document.createElement('span');
+        deleteSpan.textContent = '🗑️';
+        deleteSpan.classList.add('delete');
+        deleteSpan.addEventListener('click', (event) => {
+          confirmDialog.querySelector('span').textContent = 'file';
+          confirmDialog.querySelector('code').textContent = key;
+          confirmDialog.addEventListener(
+            'close',
+            (event) => {
+              if (confirmDialog.returnValue === 'delete') {
+                browser.tabs.sendMessage(
+                  browser.devtools.inspectedWindow.tabId,
+                  {
+                    message: 'deleteFile',
+                    data: value.relativePath,
+                  },
+                  (response) => {
+                    if (response.error) {
+                      errorDialog.querySelector('p').textContent =
+                        response.error;
+                      return errorDialog.showModal();
+                    }
+                    div.remove();
+                  },
+                );
+              }
+            },
+            { once: true },
+          );
+          confirmDialog.showModal();
+        });
+        div.append(fileNameSpan, sizeSpan, deleteSpan);
+      }
+    }
   };
 
   const refreshTree = () => {
@@ -112,27 +131,18 @@
         if (!response.structure) {
           return;
         }
+        // Naive check to avoid unnecessary DOM updates.
         const newLength = JSON.stringify(response.structure).length;
         if (lastLength === newLength) {
           return;
         }
         lastLength = newLength;
-        const structure = {};
-        if (response.structure.length === 0) {
+        if (Object.keys(response.structure).length === 0) {
           main.innerHTML = mainEmptyHTML;
           return;
         }
-        response.structure.forEach((file) => {
-          file.relativePath
-            .split('/')
-            .reduce(
-              (previous, current) =>
-                (previous[current] = previous[current] || {}),
-              structure,
-            );
-        });
         const div = document.createElement('div');
-        createTreeHTML(structure, response.structure, div, '.', true);
+        createTreeHTML(response.structure, div);
         main.innerHTML = '';
         main.append(div);
         main.addEventListener('keydown', (event) => {
