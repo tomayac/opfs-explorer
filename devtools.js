@@ -18,7 +18,18 @@
   };
 
   const createTreeHTML = (structure, container) => {
-    for (const [key, value] of Object.entries(structure)) {
+    const entries = Object.entries(structure);
+    // Sort entries by name and kind.
+    entries
+      .sort((a, b) => {
+        if (a[0] === b[0]) return 0;
+        return a[0] < b[0] ? -1 : 1;
+      })
+      .sort((a, b) => {
+        if (a[1].kind === b[1].kind) return 0;
+        return a[1].kind < b[1].kind ? -1 : 1;
+      });
+    for (const [key, value] of entries) {
       if (value.kind === 'directory') {
         const details = document.createElement('details');
         container.append(details);
