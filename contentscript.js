@@ -2,7 +2,10 @@
   let fileHandles = [];
   let directoryHandles = [];
 
-  const getDirectoryEntriesRecursive = async (directoryHandle, relativePath = '.') => {
+  const getDirectoryEntriesRecursive = async (
+    directoryHandle,
+    relativePath = '.',
+  ) => {
     const entries = {};
     // Get an iterator of the files and folders in the directory.
     const directoryIterator = directoryHandle.values();
@@ -12,30 +15,37 @@
       handle.relativePath = nestedPath;
       if (handle.kind === 'file') {
         fileHandles.push(handle);
-        promisesArray.push(handle.getFile().then(file => {
-          return {
-            name: handle.name,
-            kind: handle.kind,
-            size: file.size,
-            type: file.type,
-            lastModified: file.lastModified,
-            relativePath: nestedPath,
-          }
-        }));
+        promisesArray.push(
+          handle.getFile().then((file) => {
+            return {
+              name: handle.name,
+              kind: handle.kind,
+              size: file.size,
+              type: file.type,
+              lastModified: file.lastModified,
+              relativePath: nestedPath,
+            };
+          }),
+        );
       } else if (handle.kind === 'directory') {
         directoryHandles.push(handle);
-        promisesArray.push((async (directoryHandle) => {
-          return {
-            name: directoryHandle.name,
-            kind: directoryHandle.kind,
-            relativePath: nestedPath,
-            entries: await getDirectoryEntriesRecursive(directoryHandle, nestedPath),
-          };
-        })(handle));
+        promisesArray.push(
+          (async (directoryHandle) => {
+            return {
+              name: directoryHandle.name,
+              kind: directoryHandle.kind,
+              relativePath: nestedPath,
+              entries: await getDirectoryEntriesRecursive(
+                directoryHandle,
+                nestedPath,
+              ),
+            };
+          })(handle),
+        );
       }
     }
     const promisesResolved = await Promise.all(promisesArray);
-    promisesResolved.forEach(promiseResolved => {
+    promisesResolved.forEach((promiseResolved) => {
       entries[promiseResolved.name] = promiseResolved;
     });
     return entries;
