@@ -2,40 +2,42 @@
   let fileHandles = [];
   let directoryHandles = [];
 
-  const getDirectoryEntriesRecursive = async (
-    directoryHandle,
-    relativePath = '.',
-  ) => {
+  const getDirectoryEntriesRecursive = async (directoryHandle, relativePath = '.') => {
     const entries = {};
-    // Get an iterator for the files and folders in the directory.
-    const iterator = directoryHandle.values();
-    // Iterate through the files and folders.
-    for await (const entry of iterator) {
-      // If the entry is a file, add it to the entries object.
-      const nestedPath = `${relativePath}/${entry.name}`;
-      if (entry.kind === 'file') {
-        entry.relativePath = nestedPath;
-        fileHandles.push(entry);
-        const file = await entry.getFile();
-        entries[entry.name] = {
-          kind: entry.kind,
-          size: file.size,
-          type: file.type,
-          lastModified: file.lastModified,
-          relativePath: nestedPath,
-        };
-      }
-      // If the entry is a directory, recursively get its entries and add them to the entries object.
-      else if (entry.kind === 'directory') {
-        entry.relativePath = nestedPath;
-        directoryHandles.push(entry);
-        entries[entry.name] = {
-          kind: entry.kind,
-          relativePath: nestedPath,
-          entries: await getDirectoryEntriesRecursive(entry, nestedPath),
-        };
+    // Get an iterator of the files and folders in the directory.
+    const directoryIterator = directoryHandle.values();
+    const promisesArray = [];
+    for await (const handle of directoryIterator) {
+      const nestedPath = `${relativePath}/${handle.name}`;
+      handle.relativePath = nestedPath;
+      if (handle.kind === 'file') {
+        fileHandles.push(handle);
+        promisesArray.push(handle.getFile().then(file => {
+          return {
+            name: handle.name,
+            kind: handle.kind,
+            size: file.size,
+            type: file.type,
+            lastModified: file.lastModified,
+            relativePath: nestedPath,
+          }
+        }));
+      } else if (handle.kind === 'directory') {
+        directoryHandles.push(handle);
+        promisesArray.push((async (directoryHandle) => {
+          return {
+            name: directoryHandle.name,
+            kind: directoryHandle.kind,
+            relativePath: nestedPath,
+            entries: await getDirectoryEntriesRecursive(directoryHandle, nestedPath),
+          };
+        })(handle));
       }
     }
+    const promisesResolved = await Promise.all(promisesArray);
+    promisesResolved.forEach(promiseResolved => {
+      entries[promiseResolved.name] = promiseResolved;
+    });
     return entries;
   };
 
