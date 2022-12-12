@@ -9,13 +9,12 @@
     const entries = {};
     // Get an iterator of the files and folders in the directory.
     const directoryIterator = directoryHandle.values();
-    const promisesArray = [];
+    const directoryEntryPromises = [];
     for await (const handle of directoryIterator) {
       const nestedPath = `${relativePath}/${handle.name}`;
-      handle.relativePath = nestedPath;
       if (handle.kind === 'file') {
-        fileHandles.push(handle);
-        promisesArray.push(
+        fileHandles.push({ handle, nestedPath });
+        directoryEntryPromises.push(
           handle.getFile().then((file) => {
             return {
               name: handle.name,
@@ -28,38 +27,35 @@
           }),
         );
       } else if (handle.kind === 'directory') {
-        directoryHandles.push(handle);
-        promisesArray.push(
-          (async (directoryHandle) => {
+        directoryHandles.push({ handle, nestedPath });
+        directoryEntryPromises.push(
+          (async () => {
             return {
-              name: directoryHandle.name,
-              kind: directoryHandle.kind,
+              name: handle.name,
+              kind: handle.kind,
               relativePath: nestedPath,
-              entries: await getDirectoryEntriesRecursive(
-                directoryHandle,
-                nestedPath,
-              ),
+              entries: await getDirectoryEntriesRecursive(handle, nestedPath),
             };
-          })(handle),
+          })(),
         );
       }
     }
-    const promisesResolved = await Promise.all(promisesArray);
-    promisesResolved.forEach((promiseResolved) => {
-      entries[promiseResolved.name] = promiseResolved;
+    const directoryEntries = await Promise.all(directoryEntryPromises);
+    directoryEntries.forEach((directoryEntry) => {
+      entries[directoryEntry.name] = directoryEntry;
     });
     return entries;
   };
 
   const getFileHandle = (path) => {
     return fileHandles.find((element) => {
-      return element.relativePath === path;
+      return element.nestedPath === path;
     });
   };
 
   const getDirectoryHandle = (path) => {
     return directoryHandles.find((element) => {
-      return element.relativePath === path;
+      return element.nestedPath === path;
     });
   };
 
@@ -78,7 +74,7 @@
       };
       sendResponse({ structure: rootStructure });
     } else if (request.message === 'saveFile') {
-      const fileHandle = getFileHandle(request.data);
+      const fileHandle = getFileHandle(request.data).handle;
       try {
         const handle = await showSaveFilePicker({
           suggestedName: fileHandle.name,
@@ -92,7 +88,7 @@
         }
       }
     } else if (request.message === 'deleteFile') {
-      const fileHandle = getFileHandle(request.data);
+      const fileHandle = getFileHandle(request.data).handle;
       try {
         await fileHandle.remove();
         sendResponse({ result: 'ok' });
@@ -101,7 +97,7 @@
         sendResponse({ error: error.message });
       }
     } else if (request.message === 'deleteDirectory') {
-      const directoryHandle = getDirectoryHandle(request.data);
+      const directoryHandle = getDirectoryHandle(request.data).handle;
       try {
         await directoryHandle.remove({ recursive: true });
         sendResponse({ result: 'ok' });
