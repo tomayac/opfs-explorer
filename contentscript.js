@@ -88,18 +88,27 @@
         }
       }
     } else if (request.message === 'deleteFile') {
-      const fileHandle = getFileHandle(request.data).handle;
+      const filename = request.data.split('/').reverse()[0];
+      const directory = request.data.substring(0, request.data.lastIndexOf("/"));
+      const directoryHandle = getDirectoryHandle(directory).handle;
       try {
-        await fileHandle.remove();
+        await directoryHandle.removeEntry(filename);
         sendResponse({ result: 'ok' });
       } catch (error) {
         console.error(error.name, error.message);
         sendResponse({ error: error.message });
       }
     } else if (request.message === 'deleteDirectory') {
-      const directoryHandle = getDirectoryHandle(request.data).handle;
+      const filename = request.data.split('/').reverse()[0];
+      const directory = request.data.substring(0, request.data.lastIndexOf("/"));
+      let directoryHandle = null;
+      if(directory == ".") {
+        directoryHandle = await navigator.storage.getDirectory();
+      } else {
+        directoryHandle = await getDirectoryHandle(directory).handle;
+      }
       try {
-        await directoryHandle.remove({ recursive: true });
+        await directoryHandle.removeEntry(filename, { recursive: true });
         sendResponse({ result: 'ok' });
       } catch (error) {
         console.error(error.name, error.message);
