@@ -7,6 +7,6 @@
   devToolsConnection.onDisconnect.addListener(() => 
     devToolsConnection.onMessage.removeListener(devToolsListener));
 
-  (chrome || browser).tabs.onUpdated.addListener(() => devToolsConnection
-    .postMessage({ name: 'navigation' }));
+  (chrome || browser).tabs.onUpdated.addListener(() => 
+    devToolsConnection.postMessage({ name: 'navigation' }));
 });
