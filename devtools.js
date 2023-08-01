@@ -92,7 +92,7 @@
         fileNameSpan.addEventListener('click', (event) => {
           browser.tabs.sendMessage(browser.devtools.inspectedWindow.tabId, {
             message: 'saveFile',
-            data: value.relativePath,
+            data: value,
           });
         });
         const sizeSpan = document.createElement('span');
