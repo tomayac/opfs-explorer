@@ -4,6 +4,7 @@
   let main = null;
   let mainInnerHTML = '';
   const mainEmptyHTML = '<span>🫙</span> Origin Private File System is empty.';
+  const openDirectories = new Set();
 
   let interval = null;
 
@@ -41,6 +42,14 @@
           details.classList.add('root');
           summary.textContent = ' ';
         } else {
+          details.open = openDirectories.has(value.relativePath);
+          details.ontoggle = (event) => {
+            if (details.open) {
+              openDirectories.add(value.relativePath);
+            } else {
+              openDirectories.delete(value.relativePath);
+            }
+          }
           const directoryNameSpan = document.createElement('span');
           directoryNameSpan.textContent = key;
           const deleteSpan = document.createElement('span');
