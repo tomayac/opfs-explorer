@@ -1,8 +1,9 @@
 {
+  "version": "1.4.3",
   "scripts": {
     "fix": "npx prettier . --write"
   },
   "devDependencies": {
-    "prettier": "^3.0.1"
+    "prettier": "^3.0.3"
   }
 }

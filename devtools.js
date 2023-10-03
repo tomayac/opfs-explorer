@@ -49,8 +49,9 @@
             } else {
               openDirectories.delete(value.relativePath);
             }
-          }
+          };
           const directoryNameSpan = document.createElement('span');
+          directoryNameSpan.classList.add('directory-name');
           directoryNameSpan.textContent = key;
           const deleteSpan = document.createElement('span');
           deleteSpan.textContent = '🗑️';
@@ -97,6 +98,7 @@
         } - Last modified: ${new Date(value.lastModified).toLocaleString()}`;
         container.append(div);
         const fileNameSpan = document.createElement('span');
+        fileNameSpan.classList.add('file-name');
         fileNameSpan.textContent = key;
         fileNameSpan.addEventListener('click', (event) => {
           browser.tabs.sendMessage(browser.devtools.inspectedWindow.tabId, {

@@ -2,7 +2,7 @@
   "name": "OPFS Explorer",
   "description": "OPFS Explorer is a Chrome DevTools extension that allows you to explore the Origin Private File System (OPFS) of a web application.",
   "manifest_version": 3,
-  "version": "1.4.2",
+  "version": "1.4.3",
   "devtools_page": "devtools.html",
   "content_scripts": [
     {

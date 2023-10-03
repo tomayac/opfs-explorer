@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!doctype html>
 <html>
   <head>
     <meta charset="utf-8" />
@@ -61,6 +61,12 @@
       .directory {
         margin-inline-start: calc(-100vw - 2rem);
       }
+      .directory-name,
+      .file-name {
+        max-width: calc(100% - 6 * 0.5rem);
+        overflow-x: auto;
+        scrollbar-width: none;
+      }
       .file {
         margin-inline-start: -100vw;
       }
@@ -70,7 +76,6 @@
         cursor: pointer;
         display: flex;
         align-items: center;
-        width: 100vw;
         padding-left: 100vw;
       }
       .directory:hover,

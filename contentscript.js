@@ -17,12 +17,12 @@
   const computeSAHFileDigest = (byteArray) => {
     let h1 = 0xdeadbeef;
     let h2 = 0x41c6ce57;
-    for(const v of byteArray){
-      h1 = 31 * h1 + (v * 307);
-      h2 = 31 * h2 + (v * 307);
+    for (const v of byteArray) {
+      h1 = 31 * h1 + v * 307;
+      h2 = 31 * h2 + v * 307;
     }
-    return new Uint32Array([h1>>>0, h2>>>0]);
-  }
+    return new Uint32Array([h1 >>> 0, h2 >>> 0]);
+  };
 
   /**
    * Decodes the SAH-pool filename from the given file.
@@ -31,8 +31,14 @@
    */
 
   const decodeSAHPoolFilename = async (file) => {
-    const apBody = new Uint8Array(await file.slice(0, HEADER_CORPUS_SIZE).arrayBuffer());
-    const fileDigest = new Uint32Array(await file.slice(HEADER_OFFSET_DIGEST, HEADER_OFFSET_DIGEST + HEADER_DIGEST_SIZE).arrayBuffer());
+    const apBody = new Uint8Array(
+      await file.slice(0, HEADER_CORPUS_SIZE).arrayBuffer(),
+    );
+    const fileDigest = new Uint32Array(
+      await file
+        .slice(HEADER_OFFSET_DIGEST, HEADER_OFFSET_DIGEST + HEADER_DIGEST_SIZE)
+        .arrayBuffer(),
+    );
     const compDigest = computeSAHFileDigest(apBody);
     if (fileDigest.every((v, i) => v === compDigest[i])) {
       // Valid digest
@@ -43,7 +49,7 @@
         return textDecoder.decode(apBody.subarray(0, pathBytes));
       }
     }
-  }
+  };
 
   const getDirectoryEntriesRecursive = async (
     directoryHandle,
@@ -60,12 +66,13 @@
         directoryEntryPromises.push(
           handle.getFile().then(async (file) => {
             // Try to decode the SAH-pool filename only if the file is in the .opaque directory
-            const sahPoolName = directoryHandle.name === '.opaque' ?
-                await decodeSAHPoolFilename(file).catch(() => {}) :
-                undefined;
-            const displayName = sahPoolName ?
-                `SAH-pool VFS entry: ${sahPoolName} (OPFS name: ${handle.name})` :
-                handle.name;
+            const sahPoolName =
+              directoryHandle.name === '.opaque'
+                ? await decodeSAHPoolFilename(file).catch(() => {})
+                : undefined;
+            const displayName = sahPoolName
+              ? `SAH-pool VFS entry: ${sahPoolName} (OPFS name: ${handle.name})`
+              : handle.name;
             return {
               name: displayName,
               kind: handle.kind,
@@ -74,7 +81,9 @@
               lastModified: file.lastModified,
               relativePath: nestedPath,
               isSAHPool: !!sahPoolName,
-              originalFilename: sahPoolName ? sahPoolName.split('/').at(-1) : handle.name,
+              originalFilename: sahPoolName
+                ? sahPoolName.split('/').at(-1)
+                : handle.name,
             };
           }),
         );
@@ -132,7 +141,9 @@
           suggestedName: request.data.originalFilename,
         });
         const fileData = await fileHandle.getFile();
-        const dataToSave = request.data.isSAHPool ? fileData.slice(HEADER_OFFSET_DATA) : fileData;
+        const dataToSave = request.data.isSAHPool
+          ? fileData.slice(HEADER_OFFSET_DATA)
+          : fileData;
         const writable = await handle.createWritable();
         await writable.write(dataToSave);
         await writable.close();
