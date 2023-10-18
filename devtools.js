@@ -116,6 +116,8 @@
         if (
           /^text\//.test(type) ||
           /\/json/.test(type) ||
+          /\/xml/.test(type) ||
+          /\+json$/.test(type) ||
           /\+xml$/.test(type)
         ) {
           editSpan.textContent = '✏️';
