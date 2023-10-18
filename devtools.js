@@ -1,6 +1,7 @@
 ((browser) => {
   let confirmDialog = null;
   let errorDialog = null;
+  let editDialog = null;
   let main = null;
   let mainInnerHTML = '';
   const mainEmptyHTML = '<span>🫙</span> Origin Private File System is empty.';
@@ -55,6 +56,7 @@
           directoryNameSpan.textContent = key;
           const deleteSpan = document.createElement('span');
           deleteSpan.textContent = '🗑️';
+          deleteSpan.title = 'Delete directory';
           deleteSpan.classList.add('delete');
           deleteSpan.addEventListener('click', (event) => {
             confirmDialog.querySelector('span').textContent = 'directory';
@@ -109,8 +111,62 @@
         const sizeSpan = document.createElement('span');
         sizeSpan.classList.add('size');
         sizeSpan.textContent = readableSize(value.size);
+        const editSpan = document.createElement('span');
+        const type = value.type || '';
+        if (
+          /^text\//.test(type) ||
+          /\/json/.test(type) ||
+          /\+xml$/.test(type)
+        ) {
+          editSpan.textContent = '✏️';
+          editSpan.title = 'Edit file';
+          editSpan.classList.add('edit');
+          editSpan.addEventListener('click', (event) => {
+            const textarea = editDialog.querySelector('textarea');
+            textarea.value = '';
+            browser.tabs.sendMessage(
+              browser.devtools.inspectedWindow.tabId,
+              {
+                message: 'editFile',
+                data: value.relativePath,
+              },
+              (response) => {
+                if (response.error) {
+                  errorDialog.querySelector('p').textContent = response.error;
+                  return errorDialog.showModal();
+                }
+                textarea.value = response.result;
+              },
+            );
+            editDialog.addEventListener(
+              'close',
+              (event) => {
+                if (editDialog.returnValue === 'save') {
+                  browser.tabs.sendMessage(
+                    browser.devtools.inspectedWindow.tabId,
+                    {
+                      message: 'writeFile',
+                      data: value.relativePath,
+                      content: textarea.value,
+                    },
+                    (response) => {
+                      if (response.error) {
+                        errorDialog.querySelector('p').textContent =
+                          response.error;
+                        return errorDialog.showModal();
+                      }
+                    },
+                  );
+                }
+              },
+              { once: true },
+            );
+            editDialog.showModal();
+          });
+        }
         const deleteSpan = document.createElement('span');
         deleteSpan.textContent = '🗑️';
+        deleteSpan.title = 'Delete file';
         deleteSpan.classList.add('delete');
         deleteSpan.addEventListener('click', (event) => {
           confirmDialog.querySelector('span').textContent = 'file';
@@ -140,7 +196,7 @@
           );
           confirmDialog.showModal();
         });
-        div.append(fileNameSpan, sizeSpan, deleteSpan);
+        div.append(fileNameSpan, sizeSpan, editSpan, deleteSpan);
       }
     }
   };
@@ -165,6 +221,9 @@
         }
         const div = document.createElement('div');
         createTreeHTML(response.structure, div);
+        if (!main) {
+          return;
+        }
         main.innerHTML = '';
         main.append(div);
         main.addEventListener('keydown', (event) => {
@@ -190,6 +249,7 @@
           extPanelWindow.document.body.querySelector('.confirm-dialog');
         errorDialog =
           extPanelWindow.document.body.querySelector('.error-dialog');
+        editDialog = extPanelWindow.document.body.querySelector('.edit-dialog');
         main = extPanelWindow.document.body.querySelector('main');
         if (!mainInnerHTML) {
           mainInnerHTML = main.innerHTML;
@@ -220,6 +280,9 @@
 
   backgroundPageConnection.onMessage.addListener((message) => {
     if (message.name === 'navigation') {
+      if (!main) {
+        return;
+      }
       lastLength = 0;
       main.innerHTML = mainInnerHTML;
       refreshTree();

@@ -63,7 +63,7 @@
       }
       .directory-name,
       .file-name {
-        max-width: calc(100% - 6 * 0.5rem);
+        max-width: calc(100% - 8 * 0.5rem);
         overflow-x: auto;
         scrollbar-width: none;
       }
@@ -83,18 +83,26 @@
         background-color: Canvas;
       }
       .size,
-      .delete {
+      .delete,
+      .edit {
         margin-inline-start: 0.25rem;
       }
       .size {
         cursor: default;
         color: var(--secondary-text-color-color);
       }
+      .edit-file {
+        width: 100%;
+        height: 100%;
+      }
       .confirm-dialog form::before {
         content: "🛎️ Question:";
       }
       .error-dialog form::before {
         content: "❌ Error:";
+      }
+      .edit-dialog form::before {
+        content: "✏️ Edit:";
       }
       .spinner {
         animation: spin 4s linear infinite;
@@ -127,6 +135,19 @@
         <p></p>
         <div>
           <button type="submit" class="confirm-button" value="ok">OK</button>
+        </div>
+      </form>
+    </dialog>
+    <dialog class="edit-dialog">
+      <form method="dialog">
+        <textarea rows="10" cols="30" class="edit-file"></textarea>
+        <div>
+          <button type="submit" class="cancel-button" value="cancel">
+            Cancel
+          </button>
+          <button type="submit" class="confirm-button" value="save">
+            Save
+          </button>
         </div>
       </form>
     </dialog>

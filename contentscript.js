@@ -152,6 +152,26 @@
           console.error(error.name, error.message);
         }
       }
+    } else if (request.message === 'editFile') {
+      const fileHandle = getFileHandle(request.data).handle;
+      try {
+        const contents = await (await fileHandle.getFile()).text();
+        sendResponse({ result: contents });
+      } catch (error) {
+        console.error(error.name, error.message);
+        sendResponse({ error: error.message });
+      }
+    } else if (request.message === 'writeFile') {
+      const fileHandle = getFileHandle(request.data).handle;
+      try {
+        const writable = await fileHandle.createWritable();
+        await writable.write(request.content);
+        await writable.close();
+        sendResponse({ result: 'ok' });
+      } catch (error) {
+        console.error(error.name, error.message);
+        sendResponse({ error: error.message });
+      }
     } else if (request.message === 'deleteFile') {
       const fileHandle = getFileHandle(request.data).handle;
       try {
