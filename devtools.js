@@ -222,6 +222,28 @@
           return;
         }
         const div = document.createElement('div');
+        const downloadAllSpan = document.createElement('span');
+        downloadAllSpan.classList.add('download-all');
+        downloadAllSpan.textContent = 'Download All as Zip';
+        downloadAllSpan.title = 'Download All as Zip';
+        downloadAllSpan.addEventListener('click', (event) => {
+          browser.tabs.sendMessage(
+            browser.devtools.inspectedWindow.tabId,
+            {
+              message: 'downloadAll'
+            },
+            (response) => {
+              if (response.error) {
+                errorDialog.querySelector('p').textContent =
+                  response.error;
+                return errorDialog.showModal();
+              } else {
+                window.open(response.blobUrl, "_blank");
+              }
+            },
+          );
+        });
+        div.append(downloadAllSpan);
         createTreeHTML(response.structure, div);
         if (!main) {
           return;

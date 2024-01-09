@@ -108,6 +108,37 @@
     return entries;
   };
 
+  const downloadDirectoryEntriesRecursive = async (
+    directoryHandle,
+    relativePath = '.',
+    download = null
+  ) => {
+    // Get an iterator of the files and folders in the directory.
+    const directoryIterator = directoryHandle.values();
+    const directoryEntryPromises = [];
+    for await (const handle of directoryIterator) {
+      const nestedPath = `${relativePath}/${handle.name}`;
+      if (handle.kind === 'file') {
+        download.file(nestedPath.slice(2), (await handle.getFile()));
+      } else if (handle.kind === 'directory') {
+        directoryEntryPromises.push(
+          (async () => {
+            return {
+              name: handle.name,
+              kind: handle.kind,
+              relativePath: nestedPath,
+              entries: await downloadDirectoryEntriesRecursive(handle, nestedPath, download)
+            };
+          })(),
+        );
+      }
+    }
+    await Promise.all(directoryEntryPromises);
+    if (relativePath === '.') {
+      return URL.createObjectURL((await download.generateAsync({type: 'blob'})));
+    }
+  };
+
   const getFileHandle = (path) => {
     return fileHandles.find((element) => {
       return element.nestedPath === path;
@@ -186,6 +217,15 @@
       try {
         await directoryHandle.remove({ recursive: true });
         sendResponse({ result: 'ok' });
+      } catch (error) {
+        console.error(error.name, error.message);
+        sendResponse({ error: error.message });
+      }
+    } else if (request.message === 'downloadAll') {
+      try {
+        const root = await navigator.storage.getDirectory();
+        const blobUrl = await downloadDirectoryEntriesRecursive(root, '.', (new JSZip()));
+        sendResponse({blobUrl: blobUrl}); 
       } catch (error) {
         console.error(error.name, error.message);
         sendResponse({ error: error.message });
