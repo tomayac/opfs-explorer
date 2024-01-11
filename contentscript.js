@@ -111,7 +111,7 @@
   const downloadDirectoryEntriesRecursive = async (
     directoryHandle,
     relativePath = '.',
-    download = null
+    download = null,
   ) => {
     // Get an iterator of the files and folders in the directory.
     const directoryIterator = directoryHandle.values();
@@ -122,13 +122,15 @@
         const fileHandle = getFileHandle(nestedPath).handle;
         try {
           const sahPoolName =
-          directoryHandle.name === '.opaque'
-            ? await decodeSAHPoolFilename(file).catch(() => {})
-            : undefined;
+            directoryHandle.name === '.opaque'
+              ? await decodeSAHPoolFilename(file).catch(() => {})
+              : undefined;
           const displayName = sahPoolName
             ? `SAH-pool VFS entry: ${sahPoolName} (OPFS name: ${handle.name})`
             : handle.name;
-          const handleDisk = await download.getFileHandle(displayName, {create: true});
+          const handleDisk = await download.getFileHandle(displayName, {
+            create: true,
+          });
           const fileData = await fileHandle.getFile();
           const dataToSave = sahPoolName
             ? fileData.slice(HEADER_OFFSET_DATA)
@@ -148,7 +150,13 @@
               name: handle.name,
               kind: handle.kind,
               relativePath: nestedPath,
-              entries: await downloadDirectoryEntriesRecursive(handle, nestedPath, (await download.getDirectoryHandle(handle.name, {create: true})))
+              entries: await downloadDirectoryEntriesRecursive(
+                handle,
+                nestedPath,
+                await download.getDirectoryHandle(handle.name, {
+                  create: true,
+                }),
+              ),
             };
           })(),
         );
@@ -242,10 +250,13 @@
       }
     } else if (request.message === 'downloadAll') {
       try {
-        const download = await showDirectoryPicker({mode: 'readwrite', startIn: 'downloads'});
+        const download = await showDirectoryPicker({
+          mode: 'readwrite',
+          startIn: 'downloads',
+        });
         const root = await navigator.storage.getDirectory();
         await downloadDirectoryEntriesRecursive(root, '.', download);
-        sendResponse({result: 'success'}); 
+        sendResponse({ result: 'success' });
       } catch (error) {
         console.error(error.name, error.message);
         sendResponse({ error: error.message });

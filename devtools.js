@@ -230,12 +230,11 @@
           browser.tabs.sendMessage(
             browser.devtools.inspectedWindow.tabId,
             {
-              message: 'downloadAll'
+              message: 'downloadAll',
             },
             (response) => {
               if (response.error) {
-                errorDialog.querySelector('p').textContent =
-                  response.error;
+                errorDialog.querySelector('p').textContent = response.error;
                 return errorDialog.showModal();
               }
             },
