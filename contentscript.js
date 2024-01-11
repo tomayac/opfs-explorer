@@ -120,7 +120,6 @@
       const nestedPath = `${relativePath}/${handle.name}`;
       if (handle.kind === 'file') {
         const fileHandle = getFileHandle(nestedPath).handle;
-        console.log(nestedPath.split("/").slice(-1)[0]);
         try {
           const sahPoolName =
           directoryHandle.name === '.opaque'
