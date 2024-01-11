@@ -245,7 +245,7 @@
         const download = await showDirectoryPicker({mode: 'readwrite', startIn: 'downloads'});
         const root = await navigator.storage.getDirectory();
         await downloadDirectoryEntriesRecursive(root, '.', download);
-        sendResponse({result: "success"}); 
+        sendResponse({result: 'success'}); 
       } catch (error) {
         console.error(error.name, error.message);
         sendResponse({ error: error.message });
