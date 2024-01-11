@@ -222,6 +222,26 @@
           return;
         }
         const div = document.createElement('div');
+        const downloadAllSpan = document.createElement('span');
+        downloadAllSpan.classList.add('download-all');
+        downloadAllSpan.textContent = 'Download All';
+        downloadAllSpan.title = 'Download All';
+        downloadAllSpan.addEventListener('click', (event) => {
+          browser.tabs.sendMessage(
+            browser.devtools.inspectedWindow.tabId,
+            {
+              message: 'downloadAll'
+            },
+            (response) => {
+              if (response.error) {
+                errorDialog.querySelector('p').textContent =
+                  response.error;
+                return errorDialog.showModal();
+              }
+            },
+          );
+        });
+        div.append(downloadAllSpan);
         createTreeHTML(response.structure, div);
         if (!main) {
           return;
