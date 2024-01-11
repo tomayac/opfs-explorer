@@ -108,6 +108,57 @@
     return entries;
   };
 
+  const downloadDirectoryEntriesRecursive = async (
+    directoryHandle,
+    relativePath = '.',
+    download = null
+  ) => {
+    // Get an iterator of the files and folders in the directory.
+    const directoryIterator = directoryHandle.values();
+    const directoryEntryPromises = [];
+    for await (const handle of directoryIterator) {
+      const nestedPath = `${relativePath}/${handle.name}`;
+      if (handle.kind === 'file') {
+        const fileHandle = getFileHandle(nestedPath).handle;
+        console.log(nestedPath.split("/").slice(-1)[0]);
+        try {
+          const sahPoolName =
+          directoryHandle.name === '.opaque'
+            ? await decodeSAHPoolFilename(file).catch(() => {})
+            : undefined;
+          const displayName = sahPoolName
+            ? `SAH-pool VFS entry: ${sahPoolName} (OPFS name: ${handle.name})`
+            : handle.name;
+          const handleDisk = await download.getFileHandle(displayName, {create: true});
+          const fileData = await fileHandle.getFile();
+          const dataToSave = sahPoolName
+            ? fileData.slice(HEADER_OFFSET_DATA)
+            : fileData;
+          const writable = await handleDisk.createWritable();
+          await writable.write(dataToSave);
+          await writable.close();
+        } catch (error) {
+          if (error.name !== 'AbortError') {
+            console.error(error.name, error.message);
+          }
+        }
+      } else if (handle.kind === 'directory') {
+        directoryEntryPromises.push(
+          (async () => {
+            return {
+              name: handle.name,
+              kind: handle.kind,
+              relativePath: nestedPath,
+              entries: await downloadDirectoryEntriesRecursive(handle, nestedPath, (await download.getDirectoryHandle(handle.name, {create: true})))
+            };
+          })(),
+        );
+      }
+    }
+    await Promise.all(directoryEntryPromises);
+    return 'success';
+  };
+
   const getFileHandle = (path) => {
     return fileHandles.find((element) => {
       return element.nestedPath === path;
@@ -186,6 +237,16 @@
       try {
         await directoryHandle.remove({ recursive: true });
         sendResponse({ result: 'ok' });
+      } catch (error) {
+        console.error(error.name, error.message);
+        sendResponse({ error: error.message });
+      }
+    } else if (request.message === 'downloadAll') {
+      try {
+        const download = await showDirectoryPicker({mode: "readwrite", startIn: "downloads"});
+        const root = await navigator.storage.getDirectory();
+        await downloadDirectoryEntriesRecursive(root, '.', download);
+        sendResponse({result: "success"}); 
       } catch (error) {
         console.error(error.name, error.message);
         sendResponse({ error: error.message });
