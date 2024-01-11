@@ -54,11 +54,12 @@
           const directoryNameSpan = document.createElement('span');
           directoryNameSpan.classList.add('directory-name');
           directoryNameSpan.textContent = key;
-          const deleteSpan = document.createElement('span');
-          deleteSpan.textContent = '🗑️';
-          deleteSpan.title = 'Delete directory';
-          deleteSpan.classList.add('delete');
-          deleteSpan.addEventListener('click', (event) => {
+          const deleteButton = document.createElement('button');
+          deleteButton.classList.add('text-button');
+          deleteButton.textContent = '🗑️';
+          deleteButton.title = 'Delete directory';
+          deleteButton.classList.add('delete');
+          deleteButton.addEventListener('click', (event) => {
             confirmDialog.querySelector('span').textContent = 'directory';
             confirmDialog.querySelector('code').textContent = key;
             confirmDialog.addEventListener(
@@ -86,7 +87,7 @@
             );
             confirmDialog.showModal();
           });
-          summary.append(directoryNameSpan, deleteSpan);
+          summary.append(directoryNameSpan, deleteButton);
         }
         const div = document.createElement('div');
         details.append(div);
@@ -99,10 +100,11 @@
           value.type || 'Unknown'
         } - Last modified: ${new Date(value.lastModified).toLocaleString()}`;
         container.append(div);
-        const fileNameSpan = document.createElement('span');
-        fileNameSpan.classList.add('file-name');
-        fileNameSpan.textContent = key;
-        fileNameSpan.addEventListener('click', (event) => {
+        const fileNameButton = document.createElement('button');
+        fileNameButton.classList.add('text-button');
+        fileNameButton.classList.add('file-name');
+        fileNameButton.textContent = key;
+        fileNameButton.addEventListener('click', (event) => {
           browser.tabs.sendMessage(browser.devtools.inspectedWindow.tabId, {
             message: 'saveFile',
             data: value,
@@ -111,7 +113,8 @@
         const sizeSpan = document.createElement('span');
         sizeSpan.classList.add('size');
         sizeSpan.textContent = readableSize(value.size);
-        const editSpan = document.createElement('span');
+        const editButton = document.createElement('button');
+        editButton.classList.add('text-button');
         const type = value.type || '';
         if (
           /^text\//.test(type) ||
@@ -120,10 +123,10 @@
           /\+json$/.test(type) ||
           /\+xml$/.test(type)
         ) {
-          editSpan.textContent = '✏️';
-          editSpan.title = 'Edit file';
-          editSpan.classList.add('edit');
-          editSpan.addEventListener('click', (event) => {
+          editButton.textContent = '✏️';
+          editButton.title = 'Edit file';
+          editButton.classList.add('edit');
+          editButton.addEventListener('click', (event) => {
             const textarea = editDialog.querySelector('textarea');
             textarea.value = '';
             browser.tabs.sendMessage(
@@ -166,11 +169,12 @@
             editDialog.showModal();
           });
         }
-        const deleteSpan = document.createElement('span');
-        deleteSpan.textContent = '🗑️';
-        deleteSpan.title = 'Delete file';
-        deleteSpan.classList.add('delete');
-        deleteSpan.addEventListener('click', (event) => {
+        const deleteButton = document.createElement('button');
+        deleteButton.classList.add('text-button');
+        deleteButton.textContent = '🗑️';
+        deleteButton.title = 'Delete file';
+        deleteButton.classList.add('delete');
+        deleteButton.addEventListener('click', (event) => {
           confirmDialog.querySelector('span').textContent = 'file';
           confirmDialog.querySelector('code').textContent = key;
           confirmDialog.addEventListener(
@@ -198,7 +202,7 @@
           );
           confirmDialog.showModal();
         });
-        div.append(fileNameSpan, sizeSpan, editSpan, deleteSpan);
+        div.append(fileNameButton, sizeSpan, editButton, deleteButton);
       }
     }
   };
@@ -222,11 +226,10 @@
           return;
         }
         const div = document.createElement('div');
-        const downloadAllSpan = document.createElement('span');
-        downloadAllSpan.classList.add('download-all');
-        downloadAllSpan.textContent = 'Download All';
-        downloadAllSpan.title = 'Download All';
-        downloadAllSpan.addEventListener('click', (event) => {
+        const downloadAllButton = document.createElement('button');
+        downloadAllButton.classList.add('download-all');
+        downloadAllButton.textContent = 'Download All';
+        downloadAllButton.addEventListener('click', (event) => {
           browser.tabs.sendMessage(
             browser.devtools.inspectedWindow.tabId,
             {
@@ -240,7 +243,7 @@
             },
           );
         });
-        div.append(downloadAllSpan);
+        div.append(downloadAllButton);
         createTreeHTML(response.structure, div);
         if (!main) {
           return;

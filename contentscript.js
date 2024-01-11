@@ -258,8 +258,12 @@
         await downloadDirectoryEntriesRecursive(root, '.', download);
         sendResponse({ result: 'success' });
       } catch (error) {
-        console.error(error.name, error.message);
-        sendResponse({ error: error.message });
+        if (error.name !== 'AbortError') {
+          console.error(error.name, error.message);
+          sendResponse({ error: error.message });
+        } else {
+          sendResponse({ result: 'success' });
+        }
       }
     }
   };
