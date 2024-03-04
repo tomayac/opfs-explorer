@@ -33,6 +33,14 @@ files may cause the application to break.
 You can test the extension on the
 [demo page](https://tomayac.github.io/opfs-explorer/).
 
+## FAQ
+
+- **The OPFS Explorer tab has disappeared from DevTools, what do I do?**
+
+  This happens occasionally and can be fixed by clicking **Restore defaults and reload** in DevTools settings:
+
+  ![](https://github.com/tomayac/opfs-explorer/assets/145676/2143e1e9-0752-41ad-92c3-1d51af5a2c6e)
+
 ## License
 
 Apache 2.0
