@@ -212,7 +212,7 @@
       browser.devtools.inspectedWindow.tabId,
       { message: 'getDirectoryStructure' },
       (response) => {
-        if (!response.structure) {
+        if (!response?.structure) {
           return;
         }
         // Naive check to avoid unnecessary DOM updates.
