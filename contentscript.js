@@ -192,7 +192,7 @@
         },
       };
       sendResponse({ structure: rootStructure });
-    } else if (request.message === 'saveFile') {
+    } else if (request.message === 'downloadFile') {
       const fileHandle = getFileHandle(request.data.relativePath).handle;
       try {
         const handle = await showSaveFilePicker({

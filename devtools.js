@@ -126,7 +126,7 @@
         fileNameButton.textContent = key;
         fileNameButton.addEventListener('click', (event) => {
           browser.tabs.sendMessage(browser.devtools.inspectedWindow.tabId, {
-            message: 'saveFile',
+            message: 'downloadFile',
             data: value,
           });
         });
@@ -196,7 +196,7 @@
         downloadButton.classList.add('download');
         downloadButton.addEventListener('click', (event) => {
           browser.tabs.sendMessage(browser.devtools.inspectedWindow.tabId, {
-            message: 'saveFile',
+            message: 'downloadFile',
             data: value,
           });
         });
