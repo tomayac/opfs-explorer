@@ -54,6 +54,26 @@
           const directoryNameSpan = document.createElement('span');
           directoryNameSpan.classList.add('directory-name');
           directoryNameSpan.textContent = key;
+          const downloadButton = document.createElement('button');
+          downloadButton.classList.add('text-button');
+          downloadButton.textContent = '💾';
+          downloadButton.title = 'Download directory';
+          downloadButton.classList.add('download');
+          downloadButton.addEventListener('click', (event) => {
+            browser.tabs.sendMessage(
+              browser.devtools.inspectedWindow.tabId,
+              {
+                message: 'downloadDirectory',
+                data: value.relativePath,
+              },
+              (response) => {
+                if (response.error) {
+                  errorDialog.querySelector('p').textContent = response.error;
+                  return errorDialog.showModal();
+                }
+              },
+            );
+          });
           const deleteButton = document.createElement('button');
           deleteButton.classList.add('text-button');
           deleteButton.textContent = '🗑️';
@@ -87,7 +107,7 @@
             );
             confirmDialog.showModal();
           });
-          summary.append(directoryNameSpan, deleteButton);
+          summary.append(directoryNameSpan, downloadButton, deleteButton);
         }
         const div = document.createElement('div');
         details.append(div);
@@ -169,6 +189,17 @@
             editDialog.showModal();
           });
         }
+        const downloadButton = document.createElement('button');
+        downloadButton.classList.add('text-button');
+        downloadButton.textContent = '💾';
+        downloadButton.title = 'Download file';
+        downloadButton.classList.add('download');
+        downloadButton.addEventListener('click', (event) => {
+          browser.tabs.sendMessage(browser.devtools.inspectedWindow.tabId, {
+            message: 'saveFile',
+            data: value,
+          });
+        });
         const deleteButton = document.createElement('button');
         deleteButton.classList.add('text-button');
         deleteButton.textContent = '🗑️';
@@ -202,7 +233,13 @@
           );
           confirmDialog.showModal();
         });
-        div.append(fileNameButton, sizeSpan, editButton, deleteButton);
+        div.append(
+          fileNameButton,
+          sizeSpan,
+          editButton,
+          downloadButton,
+          deleteButton,
+        );
       }
     }
   };

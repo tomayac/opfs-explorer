@@ -265,6 +265,44 @@
           sendResponse({ result: 'success' });
         }
       }
+    } else if (request.message === 'downloadDirectory') {
+      try {
+        // Reset fileHandles and directoryHandles
+        fileHandles = [];
+        directoryHandles = [];
+
+        const root = await navigator.storage.getDirectory();
+        // Populate fileHandles and directoryHandles
+        await getDirectoryEntriesRecursive(root);
+
+        const download = await showDirectoryPicker({
+          mode: 'readwrite',
+          startIn: 'downloads',
+        });
+
+        const targetDirectory = getDirectoryHandle(request.data);
+        if (!targetDirectory) {
+          sendResponse({ error: 'Directory not found' });
+          return;
+        }
+
+        await downloadDirectoryEntriesRecursive(
+          targetDirectory.handle,
+          targetDirectory.nestedPath,
+          await download.getDirectoryHandle(targetDirectory.handle.name, {
+            create: true,
+          }),
+        );
+
+        sendResponse({ result: 'success' });
+      } catch (error) {
+        if (error.name !== 'AbortError') {
+          console.error(error.name, error.message);
+          sendResponse({ error: error.message });
+        } else {
+          sendResponse({ result: 'success' });
+        }
+      }
     }
   };
 
