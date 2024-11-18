@@ -43,10 +43,6 @@
           details.classList.add('root');
           summary.textContent = ' ';
 
-          const rootNameSpan = document.createElement('span');
-          rootNameSpan.classList.add('directory-name');
-          rootNameSpan.textContent = 'Root';
-
           const downloadButton = document.createElement('button');
           downloadButton.classList.add('text-button');
           downloadButton.textContent = '💾';
@@ -107,7 +103,7 @@
             });
           }
 
-          summary.append(rootNameSpan, downloadButton, deleteButton);
+          summary.append(downloadButton, deleteButton);
 
         } else {
           details.open = openDirectories.has(value.relativePath);
