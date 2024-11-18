@@ -41,7 +41,69 @@
         if (value.relativePath === '.') {
           details.open = true;
           details.classList.add('root');
-          summary.textContent = ' ';
+          summary.textContent = '(Root)';
+
+          const downloadButton = document.createElement('button');
+          downloadButton.classList.add('text-button');
+          downloadButton.textContent = '💾';
+          downloadButton.title = 'Download All';
+          downloadButton.classList.add('download');
+
+          const deleteButton = document.createElement('button');
+          deleteButton.classList.add('text-button');
+          deleteButton.textContent = '🗑️';
+          deleteButton.title = 'Delete All';
+          deleteButton.classList.add('delete');
+
+          if (Object.keys(value.entries).length === 0) {
+            // Hide buttons if the Root directory is empty
+            downloadButton.style.display = 'none';
+            deleteButton.style.display = 'none';
+          } else {
+            // Add event listeners if the Root directory contains files or directories
+            downloadButton.addEventListener('click', (event) => {
+              browser.tabs.sendMessage(
+                browser.devtools.inspectedWindow.tabId,
+                {
+                  message: 'downloadAll',
+                },
+                (response) => {
+                  if (response.error) {
+                    errorDialog.querySelector('p').textContent = response.error;
+                    return errorDialog.showModal();
+                  }
+                },
+              );
+            });
+
+            deleteButton.addEventListener('click', (event) => {
+              confirmDialog.querySelector('code').textContent = '🏠 (Root)';
+              const onConfirm = (event) => {
+                confirmDialog.removeEventListener('close', onConfirm);
+                if (confirmDialog.returnValue === 'delete') {
+                  browser.tabs.sendMessage(
+                    browser.devtools.inspectedWindow.tabId,
+                    {
+                      message: 'deleteRoot',
+                    },
+                    (response) => {
+                      if (response.error) {
+                        errorDialog.querySelector('p').textContent = response.error;
+                        return errorDialog.showModal();
+                      }
+                      // Refresh the tree after deletion
+                      refreshTree();
+                    },
+                  );
+                }
+              };
+              confirmDialog.addEventListener('close', onConfirm);
+              confirmDialog.showModal();
+            });
+          }
+
+          summary.append(downloadButton, deleteButton);
+
         } else {
           details.open = openDirectories.has(value.relativePath);
           details.ontoggle = (event) => {
@@ -98,7 +160,7 @@
                           response.error;
                         return errorDialog.showModal();
                       }
-                      div.remove();
+                      details.remove();
                     },
                   );
                 }
@@ -263,24 +325,6 @@
           return;
         }
         const div = document.createElement('div');
-        const downloadAllButton = document.createElement('button');
-        downloadAllButton.classList.add('download-all');
-        downloadAllButton.textContent = 'Download All';
-        downloadAllButton.addEventListener('click', (event) => {
-          browser.tabs.sendMessage(
-            browser.devtools.inspectedWindow.tabId,
-            {
-              message: 'downloadAll',
-            },
-            (response) => {
-              if (response.error) {
-                errorDialog.querySelector('p').textContent = response.error;
-                return errorDialog.showModal();
-              }
-            },
-          );
-        });
-        div.append(downloadAllButton);
         createTreeHTML(response.structure, div);
         if (!main) {
           return;

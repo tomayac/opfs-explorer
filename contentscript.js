@@ -166,6 +166,18 @@
     return 'success';
   };
 
+  const deleteDirectoryContentsRecursive = async (directoryHandle) => {
+    for await (const [name, handle] of directoryHandle.entries()) {
+      if (handle.kind === 'file') {
+        await directoryHandle.removeEntry(name);
+      } else if (handle.kind === 'directory') {
+        await deleteDirectoryContentsRecursive(handle);
+        await directoryHandle.removeEntry(name, { recursive: true });
+      }
+    }
+  };
+
+
   const getFileHandle = (path) => {
     return fileHandles.find((element) => {
       return element.nestedPath === path;
@@ -302,6 +314,16 @@
         } else {
           sendResponse({ result: 'success' });
         }
+      }
+    } else if (request.message === 'deleteRoot') {
+      try {
+        const root = await navigator.storage.getDirectory();
+        // Delete all entries in the root directory
+        await deleteDirectoryContentsRecursive(root);
+        sendResponse({ result: 'success' });
+      } catch (error) {
+        console.error(error.name, error.message);
+        sendResponse({ error: error.message });
       }
     }
   };
