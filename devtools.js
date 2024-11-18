@@ -41,7 +41,7 @@
         if (value.relativePath === '.') {
           details.open = true;
           details.classList.add('root');
-          summary.textContent = ' ';
+          summary.textContent = ' (Root)';
 
           const downloadButton = document.createElement('button');
           downloadButton.classList.add('text-button');
