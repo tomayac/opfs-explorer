@@ -77,8 +77,7 @@
             });
 
             deleteButton.addEventListener('click', (event) => {
-              confirmDialog.querySelector('span').textContent = 'all files and directories';
-              confirmDialog.querySelector('code').textContent = 'Root';
+              confirmDialog.querySelector('code').textContent = 'Root directory';
               const onConfirm = (event) => {
                 confirmDialog.removeEventListener('close', onConfirm);
                 if (confirmDialog.returnValue === 'delete') {
