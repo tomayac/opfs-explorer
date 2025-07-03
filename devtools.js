@@ -198,59 +198,53 @@
         const editButton = document.createElement('button');
         editButton.classList.add('text-button');
         const type = value.type || '';
-        if (
-          /^text\//.test(type) ||
-          /\/json/.test(type) ||
-          /\/xml/.test(type) ||
-          /\+json$/.test(type) ||
-          /\+xml$/.test(type)
-        ) {
-          editButton.textContent = '✏️';
-          editButton.title = 'Edit file';
-          editButton.classList.add('edit');
-          editButton.addEventListener('click', (event) => {
-            const textarea = editDialog.querySelector('textarea');
-            textarea.value = '';
-            browser.tabs.sendMessage(
-              browser.devtools.inspectedWindow.tabId,
-              {
-                message: 'editFile',
-                data: value.relativePath,
-              },
-              (response) => {
-                if (response.error) {
-                  errorDialog.querySelector('p').textContent = response.error;
-                  return errorDialog.showModal();
-                }
-                textarea.value = response.result;
-              },
-            );
-            editDialog.addEventListener(
-              'close',
-              (event) => {
-                if (editDialog.returnValue === 'save') {
-                  browser.tabs.sendMessage(
-                    browser.devtools.inspectedWindow.tabId,
-                    {
-                      message: 'writeFile',
-                      data: value.relativePath,
-                      content: textarea.value,
-                    },
-                    (response) => {
-                      if (response.error) {
-                        errorDialog.querySelector('p').textContent =
-                          response.error;
-                        return errorDialog.showModal();
-                      }
-                    },
-                  );
-                }
-              },
-              { once: true },
-            );
-            editDialog.showModal();
-          });
-        }
+
+        editButton.textContent = '✏️';
+        editButton.title = 'Edit file';
+        editButton.classList.add('edit');
+        editButton.addEventListener('click', (event) => {
+          const textarea = editDialog.querySelector('textarea');
+          textarea.value = '';
+          browser.tabs.sendMessage(
+            browser.devtools.inspectedWindow.tabId,
+            {
+              message: 'editFile',
+              data: value.relativePath,
+            },
+            (response) => {
+              if (response.error) {
+                errorDialog.querySelector('p').textContent = response.error;
+                return errorDialog.showModal();
+              }
+              textarea.value = response.result;
+            },
+          );
+          editDialog.addEventListener(
+            'close',
+            (event) => {
+              if (editDialog.returnValue === 'save') {
+                browser.tabs.sendMessage(
+                  browser.devtools.inspectedWindow.tabId,
+                  {
+                    message: 'writeFile',
+                    data: value.relativePath,
+                    content: textarea.value,
+                  },
+                  (response) => {
+                    if (response.error) {
+                      errorDialog.querySelector('p').textContent =
+                        response.error;
+                      return errorDialog.showModal();
+                    }
+                  },
+                );
+              }
+            },
+            { once: true },
+          );
+          editDialog.showModal();
+        });
+
         const downloadButton = document.createElement('button');
         downloadButton.classList.add('text-button');
         downloadButton.textContent = '💾';
