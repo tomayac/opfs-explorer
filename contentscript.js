@@ -166,17 +166,17 @@
     return 'success';
   };
 
-  const deleteDirectoryContentsRecursive = async (directoryHandle) => {
+  const deleteRoot = async (directoryHandle) => {
     for await (const [name, handle] of directoryHandle.entries()) {
       if (handle.kind === 'file') {
         await directoryHandle.removeEntry(name);
       } else if (handle.kind === 'directory') {
-        await deleteDirectoryContentsRecursive(handle);
-        await directoryHandle.removeEntry(name, { recursive: true });
+        // await deleteRoot(handle);
+        // await directoryHandle.removeEntry(name, { recursive: true });
+        await removeDirectoryFast(handle);
       }
     }
   };
-
 
   const getFileHandle = (path) => {
     return fileHandles.find((element) => {
@@ -190,7 +190,7 @@
     });
   };
 
-  async function* getFilesNonRecursively(dir) {
+  async function* getDirectoriesNonRecursively(dir) {
     const stack = [[dir, "", undefined, 0]];
     while (stack.length) {
       const [current, prefix, parentDir] = stack.pop();
@@ -212,10 +212,8 @@
 
   async function removeDirectoryFast(dir) {
     const toDelete = [];
-    let i = 0;
     let maxDepth = 0;
-    for await (const fileHandle
-      of getFilesNonRecursively(dir)) {
+    for await (const fileHandle of getDirectoriesNonRecursively(dir)) {
       maxDepth = Math.max(maxDepth, fileHandle.depth);
       toDelete.push(fileHandle);
     }
@@ -366,7 +364,7 @@
       try {
         const root = await navigator.storage.getDirectory();
         // Delete all entries in the root directory
-        await deleteDirectoryContentsRecursive(root);
+        await deleteRoot(root);
         sendResponse({ result: 'success' });
       } catch (error) {
         console.error(error.name, error.message);
