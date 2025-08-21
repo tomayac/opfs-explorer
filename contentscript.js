@@ -68,7 +68,7 @@
             // Try to decode the SAH-pool filename only if the file is in the .opaque directory
             const sahPoolName =
               directoryHandle.name === '.opaque'
-                ? await decodeSAHPoolFilename(file).catch(() => {})
+                ? await decodeSAHPoolFilename(file).catch(() => { })
                 : undefined;
             const displayName = sahPoolName
               ? `SAH-pool VFS entry: ${sahPoolName} (OPFS name: ${handle.name})`
@@ -123,7 +123,7 @@
         try {
           const sahPoolName =
             directoryHandle.name === '.opaque'
-              ? await decodeSAHPoolFilename(file).catch(() => {})
+              ? await decodeSAHPoolFilename(file).catch(() => { })
               : undefined;
           const displayName = sahPoolName
             ? `SAH-pool VFS entry: ${sahPoolName} (OPFS name: ${handle.name})`
@@ -166,17 +166,17 @@
     return 'success';
   };
 
-  const deleteDirectoryContentsRecursive = async (directoryHandle) => {
+  const deleteRoot = async (directoryHandle) => {
     for await (const [name, handle] of directoryHandle.entries()) {
       if (handle.kind === 'file') {
         await directoryHandle.removeEntry(name);
       } else if (handle.kind === 'directory') {
-        await deleteDirectoryContentsRecursive(handle);
-        await directoryHandle.removeEntry(name, { recursive: true });
+        // await deleteRoot(handle);
+        // await directoryHandle.removeEntry(name, { recursive: true });
+        await removeDirectoryFast(handle);
       }
     }
   };
-
 
   const getFileHandle = (path) => {
     return fileHandles.find((element) => {
@@ -189,6 +189,48 @@
       return element.nestedPath === path;
     });
   };
+
+  async function* getDirectoriesNonRecursively(dir) {
+    const stack = [[dir, "", undefined, 0]];
+    while (stack.length) {
+      const [current, prefix, parentDir, depth] = stack.pop();
+      current.relativePath = prefix + current.name;
+      current.parentDir = parentDir;
+      current.depth = depth;
+      yield current;
+
+      if (current.kind === "directory") {
+        for await (const handle of current.values()) {
+          stack.push([handle,
+            prefix + current.name + "/",
+            current,
+            depth + 1]);
+        }
+      }
+    }
+  }
+
+  async function removeDirectoryFast(dir) {
+    const toDelete = [];
+    let maxDepth = 0;
+    for await (const fileHandle of getDirectoriesNonRecursively(dir)) {
+      maxDepth = Math.max(maxDepth, fileHandle.depth);
+      toDelete.push(fileHandle);
+    }
+    async function deleteAtDepth(depth) {
+      for (const f of toDelete) {
+        if (f.depth === depth) {
+          await f.parentDir.removeEntry(f.name,
+            { recursive: true });
+        }
+      }
+    }
+    const increment = 500; // Works empirically in Firefox.
+    for (let depth = maxDepth; depth > 1; depth -= increment) {
+      await deleteAtDepth(depth);
+    }
+    await deleteAtDepth(1);
+  }
 
   const asyncFunctionWithAwait = async (request, sender, sendResponse) => {
     if (request.message === 'getDirectoryStructure') {
@@ -254,7 +296,10 @@
     } else if (request.message === 'deleteDirectory') {
       const directoryHandle = getDirectoryHandle(request.data).handle;
       try {
-        await directoryHandle.remove({ recursive: true });
+        // this will fail if the directory is more than 500 levels deep
+        // await directoryHandle.remove({ recursive: true });
+        // so we use a non recursive delete
+        await removeDirectoryFast(directoryHandle);
         sendResponse({ result: 'ok' });
       } catch (error) {
         console.error(error.name, error.message);
@@ -319,7 +364,7 @@
       try {
         const root = await navigator.storage.getDirectory();
         // Delete all entries in the root directory
-        await deleteDirectoryContentsRecursive(root);
+        await deleteRoot(root);
         sendResponse({ result: 'success' });
       } catch (error) {
         console.error(error.name, error.message);
