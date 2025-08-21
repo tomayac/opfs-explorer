@@ -193,7 +193,7 @@
   async function* getDirectoriesNonRecursively(dir) {
     const stack = [[dir, "", undefined, 0]];
     while (stack.length) {
-      const [current, prefix, parentDir] = stack.pop();
+      const [current, prefix, parentDir, depth] = stack.pop();
       current.relativePath = prefix + current.name;
       current.parentDir = parentDir;
       current.depth = depth;
