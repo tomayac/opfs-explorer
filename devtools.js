@@ -337,51 +337,55 @@
   };
 
   const refreshTree = () => {
-    browser.tabs.sendMessage(
-      browser.devtools.inspectedWindow.tabId,
-      { message: 'getDirectoryStructure' },
-      (response) => {
-        if (!response?.structure) {
-          return;
-        }
-        // Naive check to avoid unnecessary DOM updates.
-        const newLength = JSON.stringify(response.structure).length;
-        if (lastLength === newLength) {
-          return;
-        }
-        lastLength = newLength;
-        if (Object.keys(response.structure).length === 0) {
-          main.innerHTML = mainEmptyHTML;
-          return;
-        }
-        const filtered = filterStructure(response.structure, searchTerm);
-        // While searching, the Root is always kept; treat an empty Root as
-        // "no matches" rather than rendering a bare toolbar.
-        if (searchTerm) {
-          const root = filtered['.'];
-          if (!root || Object.keys(root.entries).length === 0) {
-            main.innerHTML = '<span>🔍</span> No matching files or folders.';
+    try {
+      browser.tabs.sendMessage(
+        browser.devtools.inspectedWindow.tabId,
+        { message: 'getDirectoryStructure' },
+        (response) => {
+          if (!response?.structure) {
             return;
           }
-        }
-        const div = document.createElement('div');
-        createTreeHTML(filtered, div);
-        if (!main) {
-          return;
-        }
-        main.innerHTML = '';
-        main.append(div);
-        main.addEventListener('keydown', (event) => {
-          if (event.target.nodeName === 'SUMMARY') {
-            if (event.key === 'ArrowRight') {
-              event.target.parentElement.open = true;
-            } else if (event.key === 'ArrowLeft') {
-              event.target.parentElement.open = false;
+          // Naive check to avoid unnecessary DOM updates.
+          const newLength = JSON.stringify(response.structure).length;
+          if (lastLength === newLength) {
+            return;
+          }
+          lastLength = newLength;
+          if (Object.keys(response.structure).length === 0) {
+            main.innerHTML = mainEmptyHTML;
+            return;
+          }
+          const filtered = filterStructure(response.structure, searchTerm);
+          // While searching, the Root is always kept; treat an empty Root as
+          // "no matches" rather than rendering a bare toolbar.
+          if (searchTerm) {
+            const root = filtered['.'];
+            if (!root || Object.keys(root.entries).length === 0) {
+              main.innerHTML = '<span>🔍</span> No matching files or folders.';
+              return;
             }
           }
-        });
-      },
-    );
+          const div = document.createElement('div');
+          createTreeHTML(filtered, div);
+          if (!main) {
+            return;
+          }
+          main.innerHTML = '';
+          main.append(div);
+          main.addEventListener('keydown', (event) => {
+            if (event.target.nodeName === 'SUMMARY') {
+              if (event.key === 'ArrowRight') {
+                event.target.parentElement.open = true;
+              } else if (event.key === 'ArrowLeft') {
+                event.target.parentElement.open = false;
+              }
+            }
+          });
+        },
+      );
+    } catch {
+      // no-op.
+    }
   };
 
   browser.devtools.panels.create(

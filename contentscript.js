@@ -178,7 +178,6 @@
     }
   };
 
-
   const getFileHandle = (path) => {
     return fileHandles.find((element) => {
       return element.nestedPath === path;
