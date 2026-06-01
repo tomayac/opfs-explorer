@@ -16,6 +16,19 @@
           --secondary-text-color-color: #d4d4d4;
         }
       }
+      .search {
+        position: sticky;
+        top: 0;
+        z-index: 1;
+        width: 100%;
+        box-sizing: border-box;
+        padding: 0.4rem 0.6rem;
+        border: none;
+        border-bottom: 1px solid var(--background-color);
+        background: Canvas;
+        color: inherit;
+        font: inherit;
+      }
       main {
         background-image: linear-gradient(
           to bottom,
@@ -123,6 +136,12 @@
     </style>
   </head>
   <body>
+    <input
+      type="search"
+      class="search"
+      placeholder="🔍 Filter files & folders…"
+      autocomplete="off"
+    />
     <main>
       <span class="spinner">⏳</span> Analyzing Origin Private File System
     </main>

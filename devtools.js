@@ -11,6 +11,42 @@
 
   let lastLength = 0;
 
+  let searchTerm = '';
+
+  // Returns a pruned copy of the structure: keeps files whose name matches
+  // `term`, and any directory that (recursively) contains a match. The Root
+  // directory is always kept so its toolbar buttons remain available.
+  const filterStructure = (structure, term) => {
+    if (!term) return structure;
+    const out = {};
+    for (const [key, value] of Object.entries(structure)) {
+      if (value.kind === 'directory') {
+        const isRoot = value.relativePath === '.';
+        const entries = filterStructure(value.entries, term);
+        const nameMatches = key.toLowerCase().includes(term);
+        if (isRoot || nameMatches || Object.keys(entries).length) {
+          out[key] = { ...value, entries };
+          // Auto-expand directories that lead to a match.
+          if (!isRoot && Object.keys(entries).length) {
+            openDirectories.add(value.relativePath);
+          }
+        }
+      } else if (key.toLowerCase().includes(term)) {
+        out[key] = value;
+      }
+    }
+    return out;
+  };
+
+  // Debounce helper so we don't re-render the tree on every keystroke.
+  const debounce = (fn, delay) => {
+    let timer = null;
+    return (...args) => {
+      clearTimeout(timer);
+      timer = setTimeout(() => fn(...args), delay);
+    };
+  };
+
   const readableSize = (size) => {
     if (size === 0) return '0B';
     const i = Math.floor(Math.log(size) / Math.log(1024));
@@ -88,7 +124,8 @@
                     },
                     (response) => {
                       if (response.error) {
-                        errorDialog.querySelector('p').textContent = response.error;
+                        errorDialog.querySelector('p').textContent =
+                          response.error;
                         return errorDialog.showModal();
                       }
                       // Refresh the tree after deletion
@@ -103,7 +140,6 @@
           }
 
           summary.append(downloadButton, deleteButton);
-
         } else {
           details.open = openDirectories.has(value.relativePath);
           details.ontoggle = (event) => {
@@ -318,8 +354,18 @@
           main.innerHTML = mainEmptyHTML;
           return;
         }
+        const filtered = filterStructure(response.structure, searchTerm);
+        // While searching, the Root is always kept; treat an empty Root as
+        // "no matches" rather than rendering a bare toolbar.
+        if (searchTerm) {
+          const root = filtered['.'];
+          if (!root || Object.keys(root.entries).length === 0) {
+            main.innerHTML = '<span>🔍</span> No matching files or folders.';
+            return;
+          }
+        }
         const div = document.createElement('div');
-        createTreeHTML(response.structure, div);
+        createTreeHTML(filtered, div);
         if (!main) {
           return;
         }
@@ -353,6 +399,14 @@
         if (!mainInnerHTML) {
           mainInnerHTML = main.innerHTML;
         }
+
+        const search = extPanelWindow.document.body.querySelector('.search');
+        search.value = searchTerm;
+        search.oninput = debounce(() => {
+          searchTerm = search.value.trim().toLowerCase();
+          lastLength = 0; // Force a re-render past the no-op short-circuit.
+          refreshTree();
+        }, 200);
 
         lastLength = 0;
 
