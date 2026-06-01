@@ -7,7 +7,7 @@
   const mainEmptyHTML = '<span>🫙</span> Origin Private File System is empty.';
   const openDirectories = new Set();
 
-  let interval = null;
+  let panelShown = false;
 
   let lastLength = 0;
 
@@ -408,14 +408,14 @@
           refreshTree();
         }, 200);
 
+        panelShown = true;
         lastLength = 0;
 
         refreshTree();
-        interval = setInterval(refreshTree, 3000);
       });
 
       panel.onHidden.addListener(() => {
-        clearInterval(interval);
+        panelShown = false;
       });
     },
   );
@@ -439,6 +439,8 @@
       lastLength = 0;
       main.innerHTML = mainInnerHTML;
       refreshTree();
+    } else if (message.name === 'fsChange') {
+      if (panelShown) refreshTree();
     }
   });
 })(chrome || browser);

@@ -1,6 +1,7 @@
 ((browser) => {
   let fileHandles = [];
   let directoryHandles = [];
+  let fsObserver = null;
 
   const textDecoder = new TextDecoder();
 
@@ -190,11 +191,20 @@
     });
   };
 
+  const setupObserver = async (root) => {
+    if (fsObserver) return;
+    fsObserver = new FileSystemObserver(() => {
+      browser.runtime.sendMessage({ name: 'fsChange' });
+    });
+    await fsObserver.observe(root, { recursive: true });
+  };
+
   const asyncFunctionWithAwait = async (request, sender, sendResponse) => {
     if (request.message === 'getDirectoryStructure') {
       fileHandles = [];
       directoryHandles = [];
       const root = await navigator.storage.getDirectory();
+      await setupObserver(root);
       const structure = await getDirectoryEntriesRecursive(root);
       const rootStructure = {
         '.': {
