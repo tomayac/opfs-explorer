@@ -35,12 +35,6 @@ for file in "${FILES_TO_ZIP[@]}"; do
   cp "$file" build/
 done
 
-# Transform manifest.json for Web Store compatibility.
-echo "Transforming manifest.json to remove localhost patterns..."
-jq '
-  .content_scripts |= map(.matches |= map(select(test("http://localhost|http://0\\.0\\.0\\.0|http://127\\.0\\.0\\.1") | not)))
-' manifest.json > build/manifest.json
-
 echo "Creating new archive named '$OUTPUT_ZIP'..."
 
 # Create the zip file from the build directory.
